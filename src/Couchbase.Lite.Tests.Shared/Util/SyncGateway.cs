@@ -273,6 +273,19 @@ namespace Couchbase.Lite.Tests
             WorkaroundSyncGatewayRaceCondition();
         }
 
+        public string CreateSession(string username, long ttl)
+        {
+            var url = _adminRemoteUri.AppendPath("_session");
+            var jsonString = String.Format(@"{{""name"":""{0}"",""ttl"":{1}}}", username, ttl);
+            var postRequest = new HttpRequestMessage(HttpMethod.Post, url);
+            postRequest.Content = new StringContent(jsonString);
+            postRequest.Content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
+            var response = _httpClient.SendAsync(postRequest).Result;
+            jsonString = response.Content.ReadAsStringAsync().Result;
+            var json = Manager.GetObjectMapper().ReadValue<IDictionary<string, object>>(jsonString);
+            return json.GetCast<string>("session_id");
+        }
+
         private string CreateDocumentJson(string attachmentName)
         {
             if (attachmentName != null)

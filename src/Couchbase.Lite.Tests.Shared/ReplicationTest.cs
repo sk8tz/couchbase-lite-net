@@ -182,6 +182,22 @@ namespace Couchbase.Lite
         }
 
         [Test]
+        public void TestExpiredSession()
+        {
+            using (var remoteDb = _sg.CreateDatabase(TempDbName())) {
+                remoteDb.DisableGuestAccess();
+                var token = remoteDb.CreateSession("jim", 1);
+                Sleep(2000);
+                var pull = database.CreatePullReplication(remoteDb.RemoteUri);
+                pull.SetCookie("SyncGatewaySession", token, "/", DateTime.Now, false, true);
+                RunReplication(pull);
+                var le = pull.LastError as HttpResponseException;
+                Assert.IsNotNull(le);
+                Assert.AreEqual(HttpStatusCode.Unauthorized, le.StatusCode);
+            }
+        }
+
+        [Test]
         public void TestPendingDocumentIDs()
         {
             using (var remoteDb = _sg.CreateDatabase(TempDbName())) {
