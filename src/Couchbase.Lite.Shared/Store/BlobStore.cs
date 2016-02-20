@@ -131,7 +131,7 @@ namespace Couchbase.Lite
                     md.Update(buffer, 0, lenRead);
                     lenRead = fis.Read(buffer, 0, buffer.Length);
                 }
-                fis.Close();
+                fis.Dispose();
             } catch (IOException) {
                 Log.E(Database.TAG, "Error readin tmp file to compute key");
             }
@@ -214,8 +214,8 @@ namespace Couchbase.Lite
                     lenRead = inputStream.Read(buffer, 0, buffer.Length);
                 }
 
-                inputStream.Close();
-                fos.Close();
+                inputStream.Dispose();
+                fos.Dispose();
             } catch (IOException e) {
                 Log.E(Database.TAG, "Error writing blog to tmp file", e);
                 outKey = null;
@@ -257,7 +257,7 @@ namespace Couchbase.Lite
             } finally {
                 if (fos != null) {
                     try {
-                        fos.Close();
+                        fos.Dispose();
                     }
                     catch (IOException) {
                     }
@@ -330,7 +330,7 @@ namespace Couchbase.Lite
                 try {
                     var raf = new FileStream (path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
                     magic = raf.ReadByte() & unchecked((0xff)) | ((raf.ReadByte() << 8) & unchecked((0xff00)));
-                    raf.Close();
+                    raf.Dispose();
                 }
                 catch (Exception e) {
                     Log.E(TAG, "Error in IsGZipped", e);

@@ -64,6 +64,7 @@ namespace Couchbase.Lite.Util
         {
             _level = logLevel;
             _ts = new CouchbaseTraceListener(logLevel);
+#if !WINDOWS_UWP
             try {
                 Trace.Listeners.Add(_ts);
             } catch(NotSupportedException e) {
@@ -71,8 +72,8 @@ namespace Couchbase.Lite.Util
                 "linked away, please ensure that in your Project Options under iOS Build that Linker Behavior " +
                 "is set to 'Don't Link'", e);
             }
+#endif
         }
-
         #endregion
 
         #region Private Methods
@@ -87,9 +88,9 @@ namespace Couchbase.Lite.Util
             return err;
         }
 
-        #endregion
+#endregion
 
-        #region ILogger
+#region ILogger
 
         public void V(string tag, string msg)
         {
@@ -252,7 +253,7 @@ namespace Couchbase.Lite.Util
             E(tag, string.Format(format, args));
         }
 
-        #endregion
+#endregion
 
     }
 }

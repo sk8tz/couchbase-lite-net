@@ -198,19 +198,19 @@ namespace Couchbase.Lite.Support
             _isDisposed = true;
             Log.D(TAG, "Closed");
             if (_output != null) {
-                _output.Close();
+                _output.Dispose();
                 _output = null;
             }
 
             if (_currentInput != null) {
-                _currentInput.Close();
+                _currentInput.Dispose();
                 _currentInput = null;
             }
 
             for (int i = _nextInputIndex; i < _inputs.Count; i++) {
                 var nextStream = _inputs[i] as Stream;
                 if (nextStream != null) {
-                    nextStream.Close();
+                    nextStream.Dispose();
                 }
             }
 
@@ -303,7 +303,7 @@ namespace Couchbase.Lite.Support
         private bool OpenNextInput()
         {
             if (_currentInput != null) {
-                _currentInput.Close();
+                _currentInput.Dispose();
                 _currentInput = null;
             }
 
