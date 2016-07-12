@@ -107,7 +107,7 @@ namespace CouchbaseSample
         private void MonitorOIDC (object sender, ReplicationChangeEventArgs args)
         {
             var source = args.Source;
-            var username = source.Authenticator?.Username;
+            var username = source.Username;
             if (Username == null && username != null && IsReplicationStarted (source)) {
                 source.Changed -= MonitorOIDC;
                 if (Login (username)) {
