@@ -17,7 +17,7 @@ using Couchbase.Lite.Store;
 
 namespace SimpleAndroidSync
 {
-    [Activity (Label = "SimpleAndroidSync", MainLauncher = true)]
+    [Activity (Label = "SimpleAndroidSync")]
     public class MainActivity : Activity
     {
         static readonly string Tag = "SimpleAndroidSync";
@@ -39,12 +39,12 @@ namespace SimpleAndroidSync
             var opts = new DatabaseOptions();
             opts.Create = true;
 
-			// To use this feature, add the Couchbase.Lite.Storage.ForestDB nuget package
+            // To use this feature, add the Couchbase.Lite.Storage.ForestDB nuget package
             //opts.StorageType = StorageEngineTypes.ForestDB;
 
-			// To use this feature add the Couchbase.Lite.Storage.SQLCipher nuget package,
-			// or uncomment the above line and add the Couchbase.Lite.Storage.ForestDB package
-			//opts.EncryptionKey = new SymmetricKey("foo");
+            // To use this feature add the Couchbase.Lite.Storage.SQLCipher nuget package,
+            // or uncomment the above line and add the Couchbase.Lite.Storage.ForestDB package
+            //opts.EncryptionKey = new SymmetricKey("foo");
             Database = Manager.SharedInstance.OpenDatabase(Tag.ToLower(), opts);
 
             Query = List.GetQuery(Database);
@@ -120,9 +120,9 @@ namespace SimpleAndroidSync
                 return true;
             }));
 
-            var addMenu = menu.Add("Config");
+            /*var addMenu = menu.Add("Config");
             addMenu.SetShowAsAction(ShowAsAction.Always);
-            addMenu.SetOnMenuItemClickListener(new DelegatedMenuItemListener(OnConfigClicked));
+            addMenu.SetOnMenuItemClickListener(new DelegatedMenuItemListener(OnConfigClicked));*/
 
             var cleanMenu = menu.Add("Clean");
             cleanMenu.SetShowAsAction(ShowAsAction.Always);
@@ -131,12 +131,12 @@ namespace SimpleAndroidSync
             return true;
         }
 
-        private bool OnConfigClicked(IMenuItem menuItem)
+       /* private bool OnConfigClicked(IMenuItem menuItem)
         {
             var activity = new Intent (this, typeof(ConfigActivity));
             StartActivity(activity);
             return true;
-        }
+        }*/
 
         private bool OnCleanClicked(IMenuItem menuItem)
         {
