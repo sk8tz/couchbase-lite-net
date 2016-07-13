@@ -28,6 +28,7 @@ namespace CouchbaseSample
 
         // class-level declarations
         UINavigationController navigationController;
+        OIDCViewController _loginController;
         UIWindow window;
         private Replication _pull;
         private Replication _push;
@@ -54,12 +55,12 @@ namespace CouchbaseSample
             Couchbase.Lite.Storage.SystemSQLite.Plugin.Register();
 
             OIDCViewController.FinishedLaunching (app, options);
-            var controller = new OIDCViewController();
+            _loginController = new OIDCViewController();
             window.TintColor = UIColor.FromRGB(0.564f, 0.0f, 0.015f);
-            controller.EdgesForExtendedLayout = UIRectEdge.None;
-            controller.Delegate = this;
+            _loginController.EdgesForExtendedLayout = UIRectEdge.None;
+            _loginController.Delegate = this;
 
-            navigationController = new UINavigationController (controller);
+            navigationController = new UINavigationController (_loginController);
             window.RootViewController = navigationController;
             window.MakeKeyAndVisible ();
 
@@ -73,7 +74,7 @@ namespace CouchbaseSample
 
         public void DidAuthCodeSignIn (OIDCViewController viewController)
         {
-            StopReplication ();
+            StopReplication (false);
             StartPull (repl => {
                 repl.Authenticator = AuthenticatorFactory.CreateOpenIDAuthenticator (Manager.SharedInstance,
                                                                                     OIDCLoginController.LoginCallback);
@@ -101,7 +102,14 @@ namespace CouchbaseSample
 
         public void DidLogout (OIDCViewController viewController)
         {
-            
+            Username = null;
+            StopReplication (true);
+            navigationController.PopViewController (true);
+        }
+
+        public void Logout ()
+        {
+            _loginController.Logout ();
         }
 
         private void MonitorOIDC (object sender, ReplicationChangeEventArgs args)
@@ -110,14 +118,16 @@ namespace CouchbaseSample
             var username = source.Username;
             if (Username == null && username != null && IsReplicationStarted (source)) {
                 source.Changed -= MonitorOIDC;
-                if (Login (username)) {
-                    if (_pull == source) {
+                var restartReplication = false;
+                if (Login (username, ref restartReplication)) {
+                    if (!restartReplication) {
                         DispatchQueue.MainQueue.DispatchAsync (() => {
                             StartPush (repl => {
                                 repl.Authenticator = AuthenticatorFactory.CreateOpenIDAuthenticator (Manager.SharedInstance,
                                                                                                     OIDCLoginController.LoginCallback);
-                                CompleteLogin ();
                             });
+
+                            CompleteLogin ();
                         });
                     } else {
                         // When switching the user, the database and _pull replicator are
@@ -207,7 +217,8 @@ namespace CouchbaseSample
 
         private bool Login (string username, NSHttpCookie [] sessionCookies)
         {
-            if (Login (username)) {
+            var dummy = false;
+            if (Login (username, ref dummy)) {
                 StartPull (pull => {
                     
                     foreach (var cookie in sessionCookies) {
@@ -219,18 +230,22 @@ namespace CouchbaseSample
                         push.SetCookie (cookie.Name, cookie.Value, cookie.Path, (DateTime)cookie.ExpiresDate, cookie.IsSecure, false);
                     }
                 });
+
+                return true;
             }
 
-            return true;
+            return false;
         }
 
-        private bool Login (string username)
+        private bool Login (string username, ref bool needRestartReplication)
         {
+            var isSwitchingUser = false;
             var user = _database?.GetExistingLocalDocument (LocalDocId);
             if (_database != null && user != null && user ["username"] as string != username) {
-                StopReplication ();
+                StopReplication (false);
                 _database.Delete ();
                 _database = null;
+                isSwitchingUser = true;
             }
 
             if (_database == null) {
@@ -243,6 +258,8 @@ namespace CouchbaseSample
                 ["username"] = username
             });
             Username = username;
+            needRestartReplication = isSwitchingUser;
+
             return true;
         }
 
@@ -268,17 +285,25 @@ namespace CouchbaseSample
             _push.Start ();
         }
 
-        private void StopReplication ()
+        private void StopReplication (bool clearCredentials)
         {
             if (_pull != null) {
                 _pull.Stop ();
                 _pull.Changed -= ReplicationProgress;
+                if (clearCredentials) {
+                    _pull.RemoveStoredCredentials ();
+                }
+
                 _pull = null;
             }
 
             if (_push != null) {
                 _push.Stop ();
                 _push.Changed -= ReplicationProgress;
+                if (clearCredentials) {
+                    _push.RemoveStoredCredentials ();
+                }
+
                 _push = null;
             }
 

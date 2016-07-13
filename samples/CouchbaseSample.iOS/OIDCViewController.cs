@@ -62,6 +62,13 @@ namespace CouchbaseSample
             Delegate?.DidAuthCodeSignIn (this);
         }
 
+        public void Logout ()
+        {
+            SignIn.SharedInstance.SignOutUser ();
+            SignIn.SharedInstance.DisconnectUser ();
+            Delegate?.DidLogout (this);
+        }
+
         public override void ViewDidLoad ()
         {
             base.ViewDidLoad ();

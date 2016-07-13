@@ -62,7 +62,11 @@ namespace CouchbaseSample
             base.ViewDidLoad ();
 
             var cleanButton = new UIBarButtonItem ("Clean", UIBarButtonItemStyle.Plain, DeleteCheckedItems);
-            NavigationItem.RightBarButtonItem = cleanButton;
+            NavigationItem.LeftBarButtonItem = cleanButton;
+
+            var logoutButton = new UIBarButtonItem ("Logout", UIBarButtonItemStyle.Done, Logout);
+            NavigationItem.RightBarButtonItem = logoutButton;
+            NavigationItem.HidesBackButton = true;
 
             EntryField.ShouldEndEditing += (sender) => {
                 EntryField.ResignFirstResponder ();
@@ -258,6 +262,13 @@ namespace CouchbaseSample
             };
             alert.Show ();
         }
+
+        void Logout (object sender, EventArgs args)
+        {
+            var app = (AppDelegate)UIApplication.SharedApplication.Delegate;
+            app.Logout ();
+        }
+
         #endregion
 
     }
