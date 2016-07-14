@@ -11,14 +11,18 @@ using Android.Gms.Common.Apis;
 using Android.App;
 using Android.Support.V7.App;
 using Android.Runtime;
+using Android.Webkit;
 
 namespace SimpleAndroidSync
 {
     [Activity(Label = "SimpleAndroidSync", MainLauncher =true)]
     public class LoginActivity : AppCompatActivity
     {
+        public const string IntentActionLogout = "logout";
+        private const string UseGoogleSignInKey = "UseGoogleSignIn";
         private const int RcGoogleSignIn = 9001;
 
+        private bool _shouldContinueGSOLogout;
         private GoogleApiClient _googleApiClient;
 
         private void GSOButtonClicked(object sender, EventArgs e)
@@ -30,7 +34,7 @@ namespace SimpleAndroidSync
         private void OpenIDButtonClicked(object sender, EventArgs e)
         {
             var app = (CouchbaseSample.Android.Application)Application;
-            app.LoginWithAuthCode(this);
+            app.LoginWithAuthCode();
         }
 
 
@@ -38,7 +42,7 @@ namespace SimpleAndroidSync
         {
             var errorMessage = $"Google Sign-in connection failed : ({result.ErrorCode}) {result.ErrorMessage}";
             var app = (CouchbaseSample.Android.Application)Application;
-            app.ShowErrorMessage(errorMessage);
+            app.ShowMessage(errorMessage);
         }
 
         private void HandleGSOResult(GoogleSignInResult result)
@@ -56,13 +60,79 @@ namespace SimpleAndroidSync
                 } else {
                     errorMessage = "Google sign-in failed : No ID token returned";
                 }
+
+                SetLogInWithGSO(true);
             } else {
                 errorMessage = $"Google sign-in failed : ({result.Status.StatusCode}) {result.Status.StatusMessage}";
             }
 
             if(!success) {
                 var app = (CouchbaseSample.Android.Application)Application;
-                app.ShowErrorMessage(errorMessage);
+                app.ShowMessage(errorMessage);
+            }
+        }
+
+        private void SetLogInWithGSO(bool login)
+        {
+            var sharedPref = GetPreferences(FileCreationMode.Private);
+            var editor = sharedPref.Edit();
+            editor.PutBoolean(UseGoogleSignInKey, login);
+            editor.Commit();
+        }
+
+        private bool LoggedInWithGSO()
+        {
+            var sharedPref = GetPreferences(FileCreationMode.Private);
+            return sharedPref.GetBoolean(UseGoogleSignInKey, false);
+        }
+
+        private void Logout()
+        {
+            if(LoggedInWithGSO()) {
+                LogoutFromGSO();
+            } else {
+                ClearWebViewCookies();
+                CompleteLogout();
+            }
+        }
+
+        private void ClearWebViewCookies()
+        {
+            var cookieManager = CookieManager.Instance;
+            if(Build.VERSION.SdkInt >= BuildVersionCodes.Lollipop) {
+                cookieManager.RemoveAllCookies(null);
+                cookieManager.Flush();
+            } else {
+                cookieManager.RemoveAllCookie();
+                CookieSyncManager.Instance.Sync();
+            }
+        }
+
+        private void CompleteLogout()
+        {
+            var application = (CouchbaseSample.Android.Application)Application;
+            application.ShowMessage("Logout successfully");
+        }
+
+        private void LogoutFromGSO()
+        {
+            if(_googleApiClient.IsConnected) {
+                Auth.GoogleSignInApi.SignOut(_googleApiClient).SetResultCallback(new ResultCallback<Statuses>(s =>
+                {
+                    var application = (CouchbaseSample.Android.Application)Application;
+                    if(s.IsSuccess) {
+                        ClearWebViewCookies();
+                        SetLogInWithGSO(false);
+                        CompleteLogout();
+                    } else {
+                        application.ShowMessage("Failed to sign out from Google SignIn");
+                    }
+                }));
+            } else {
+                _shouldContinueGSOLogout = true;
+                if(!_googleApiClient.IsConnecting) {
+                    _googleApiClient.Connect();
+                }
             }
         }
 
@@ -82,6 +152,14 @@ namespace SimpleAndroidSync
 
             _googleApiClient = new GoogleApiClient.Builder(Application.Context)
                 .EnableAutoManage(this, OnFailed)
+                .AddConnectionCallbacks(b =>
+                {
+                    if(_shouldContinueGSOLogout) {
+                        LogoutFromGSO();
+                    }
+
+                    _shouldContinueGSOLogout = false;
+                }, null)
                 .AddApi(Auth.GOOGLE_SIGN_IN_API, gso)
                 .Build();
 
@@ -89,6 +167,11 @@ namespace SimpleAndroidSync
             googleSignInButton.SetSize(SignInButton.SizeStandard);
             googleSignInButton.SetScopes(gso.GetScopeArray());
             googleSignInButton.Click += GSOButtonClicked;
+
+            var action = Intent.Action;
+            if(action == IntentActionLogout) {
+                Logout();
+            }
         }
 
         protected override void OnActivityResult(int requestCode, [GeneratedEnum] Result resultCode, Intent data)

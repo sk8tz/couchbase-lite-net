@@ -18,22 +18,21 @@ using Square.OkHttp3;
 
 namespace CouchbaseSample.Android
 {
-    [Application(AllowBackup = true, Label = "SimpleAndroidSync", Theme = "@style/Theme.AppCompat.Light")]
+    [Application(AllowBackup = true, Label = "SimpleAndroidSync", Theme = "@style/Theme.AppCompat")]
     public sealed class Application : global::Android.App.Application
     {
         public const string TAG = "GrocerySync";
 
         private const string DatabaseName = "grocery-sync";
         private const string UserLocalDocId = "user";
-        private const string ServerDbUrl = "http://192.168.3.3:4984/openid_db";
+        private const string ServerDbUrl = "http://us-west.testfest.couchbasemobile.com:4984/grocery-sync";
 
         private readonly OkHttpClient _httpClient = new OkHttpClient();
 
         private Replication _push;
         private Replication _pull;
         private Exception _syncError;
-        private bool _shouldStartPushAfterPull = false;
-        private int _pullIdleCount = 0;
+        private Action<Replication> _changedHandler;
 
         public Database Database { get; private set; }
 
@@ -53,23 +52,26 @@ namespace CouchbaseSample.Android
             get { return new URL($"{ServerDbUrl}/_session"); }
         }
 
-        public void ShowErrorMessage(string message)
+        public void ShowMessage(string message)
         {
             RunOnUiThread(() =>
             {
-                Log.Error(TAG, message);
+                Log.Info(TAG, message);
                 Toast.MakeText(Application.Context, message, ToastLength.Long).Show();
             });
         }
 
-        public void LoginWithAuthCode(Activity activity)
+        public void LoginWithAuthCode()
         {
-            StopReplication();
+            StopReplication(false);
             StartPull(r =>
             {
-                _shouldStartPushAfterPull = true;
                 var callback = OpenIDAuthenticator.GetOIDCCallback(Application.Context);
                 r.Authenticator = AuthenticatorFactory.CreateOpenIDAuthenticator(Manager.SharedInstance, callback);
+                _changedHandler = r1 =>
+                {
+                    CheckAuthCodeLoginComplete(r1);
+                };
             });
         }
 
@@ -95,7 +97,7 @@ namespace CouchbaseSample.Android
                     var username = (string)userInfo["name"];
                     var cookies = Cookie.ParseAll(HttpUrl.Get(new URL(ServerDbUrl)), r.Headers());
                     if(Login(username, cookies)) {
-                        StartApplication();
+                        CompleteLogin();
                     }
                 }
             }, (c, e) =>
@@ -104,9 +106,47 @@ namespace CouchbaseSample.Android
             });
         }
 
+        public void Logout()
+        {
+            StopReplication(true);
+            Username = null;
+            var intent = new Intent(Application.Context, typeof(LoginActivity));
+            intent.SetFlags(ActivityFlags.NewTask | ActivityFlags.ClearTask);
+            intent.SetAction(LoginActivity.IntentActionLogout);
+            StartActivity(intent);
+        }
+
+        private bool IsReplicationStarted(Replication repl)
+        {
+            return repl.Status == ReplicationStatus.Idle && repl.ChangesCount > 0;
+        }
+
+        private void CheckAuthCodeLoginComplete(Replication repl)
+        {
+            if(repl != _pull) {
+                return;
+            }
+
+            // Check the pull replicator is done authenticating or not.
+            // If done, start the push replicator:
+            if(Username == null && repl.Username != null && IsReplicationStarted(repl)) {
+                if(Login(repl.Username)) {
+                    if(_pull != null) {
+                        _changedHandler = null;
+                        StartPush(r =>
+                        {
+                            var callback = OpenIDAuthenticator.GetOIDCCallback(Application.Context);
+                            r.Authenticator = AuthenticatorFactory.CreateOpenIDAuthenticator(Manager.SharedInstance, callback);
+                        });
+
+                        CompleteLogin();
+                    }
+                }
+            }
+        }
+
         private void StartPull(Action<Replication> setupCallback)
         {
-            _pullIdleCount = 0;
             _pull = Database.CreatePullReplication(ServerDbUri);
             _pull.Continuous = true;
             setupCallback?.Invoke(_pull);
@@ -123,32 +163,31 @@ namespace CouchbaseSample.Android
             _push.Start();
         }
 
-        private void StopReplication()
+        private void StopReplication(bool clearCredentials)
         {
-            _pull?.Stop();
-            _push?.Stop();
+            _changedHandler = null;
+            var pull = _pull;
+            _pull = null;
+            if(pull != null) {
+                pull.Stop();
+                pull.Changed -= OnChanged;
+            }
+
+            var push = _push;
+            _push = null;
+            if(push != null) {
+                push.Stop();
+                push.Changed -= OnChanged;
+            }
         }
 
         private void OnChanged(object sender, ReplicationChangeEventArgs args)
         {
             Log.Verbose(TAG, $"Replication change status {args.Status} [{args.Source}]");
+
+            _changedHandler?.Invoke(args.Source);
+
             var error = _pull?.LastError;
-            if(_shouldStartPushAfterPull && IsStartedOrError(_pull)) {
-                if(error == null) {
-                    var username = _pull.Username;
-                    if(Login(username)) {
-                        StartPush(r =>
-                        {
-                            var callback = OpenIDAuthenticator.GetOIDCCallback(Application.Context);
-                            r.Authenticator = AuthenticatorFactory.CreateOpenIDAuthenticator(Manager.SharedInstance, callback);
-                        });
-                        StartApplication();
-                    }
-                }
-
-                _shouldStartPushAfterPull = false;
-            }
-
             if(_push != null) {
                 if(error == null) {
                     error = _push?.LastError;
@@ -157,25 +196,8 @@ namespace CouchbaseSample.Android
 
             if(error != _syncError) {
                 _syncError = error;
-                ShowErrorMessage(_syncError.ToString());
+                ShowMessage(_syncError.ToString());
             }
-        }
-
-        private bool IsStartedOrError(Replication repl)
-        {
-            if(repl == null) {
-                return false;
-            }
-
-            var isIdle = false;
-            if(repl == _pull) {
-                isIdle = repl.Status == ReplicationStatus.Idle;
-                isIdle = isIdle && (++_pullIdleCount > 1);
-            } else {
-                isIdle = repl.Status == ReplicationStatus.Idle;
-            }
-
-            return isIdle || repl.ChangesCount > 0 || repl.LastError != null;
         }
 
         private bool Login(string username, IList<Cookie> cookies)
@@ -211,7 +233,8 @@ namespace CouchbaseSample.Android
             }
 
             var user = Database?.GetExistingLocalDocument(UserLocalDocId);
-            if(user != null && username.Equals(user["username"])) {
+            if(user != null && !username.Equals(user["username"])) {
+                StopReplication(false);
                 try {
                     Database.Close().Wait();
                     Database.Delete();
@@ -242,7 +265,7 @@ namespace CouchbaseSample.Android
             return true;
         }
 
-        private void StartApplication()
+        private void CompleteLogin()
         {
             RunOnUiThread(() =>
             {
@@ -265,6 +288,13 @@ namespace CouchbaseSample.Android
                     StorageType = StorageEngineTypes.SQLite,
                     Create = true
                 };
+
+                // To use this feature, add the Couchbase.Lite.Storage.ForestDB nuget package
+                //opts.StorageType = StorageEngineTypes.ForestDB;
+
+                // To use this feature add the Couchbase.Lite.Storage.SQLCipher nuget package,
+                // or uncomment the above line and add the Couchbase.Lite.Storage.ForestDB package
+                //opts.EncryptionKey = new SymmetricKey("foo");
 
                 try {
                     Database = Manager.SharedInstance.OpenDatabase(DatabaseName, opts);

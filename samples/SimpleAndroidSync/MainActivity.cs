@@ -14,11 +14,12 @@ using CouchbaseSample.Android.Document;
 using CouchbaseSample.Android.Helper;
 using System.Linq;
 using Couchbase.Lite.Store;
+using Android.Support.V7.App;
 
 namespace SimpleAndroidSync
 {
     [Activity (Label = "SimpleAndroidSync")]
-    public class MainActivity : Activity
+    public class MainActivity : AppCompatActivity
     {
         static readonly string Tag = "SimpleAndroidSync";
 
@@ -39,13 +40,7 @@ namespace SimpleAndroidSync
             var opts = new DatabaseOptions();
             opts.Create = true;
 
-            // To use this feature, add the Couchbase.Lite.Storage.ForestDB nuget package
-            //opts.StorageType = StorageEngineTypes.ForestDB;
-
-            // To use this feature add the Couchbase.Lite.Storage.SQLCipher nuget package,
-            // or uncomment the above line and add the Couchbase.Lite.Storage.ForestDB package
-            //opts.EncryptionKey = new SymmetricKey("foo");
-            Database = Manager.SharedInstance.OpenDatabase(Tag.ToLower(), opts);
+            Database = ((CouchbaseSample.Android.Application)Application).Database;
 
             Query = List.GetQuery(Database);
             Query.Completed += (sender, e) => 
@@ -92,6 +87,12 @@ namespace SimpleAndroidSync
             SetContentView (layout);
         }
 
+        public void Logout()
+        {
+            var application = (CouchbaseSample.Android.Application)Application;
+            application.Logout();
+        }
+
         protected override void OnResume()
         {
             base.OnResume(); // Always call the superclass first.
@@ -101,42 +102,32 @@ namespace SimpleAndroidSync
 
         public override bool OnCreateOptionsMenu(IMenu menu)
         {
-            var offlineMenu = menu.Add("Toggle Wifi");
-            offlineMenu.SetShowAsAction(ShowAsAction.Always);
-            offlineMenu.SetOnMenuItemClickListener(new DelegatedMenuItemListener(
-            (item)=>
-            {
-                var preferences = PreferenceManager.GetDefaultSharedPreferences(this);
-                var syncUrl = preferences.GetString("sync-gateway-url", null);
-                
-                if (!String.IsNullOrWhiteSpace(syncUrl))
-                {
-                    var mgr = Application.Context.GetSystemService(Application.WifiService) as WifiManager;
-                    var setEnabled = !mgr.IsWifiEnabled;
-                    mgr.SetWifiEnabled(setEnabled);
-                    item.SetTitle(!setEnabled ? "Enable Wifi" : "Disable Wifi");
-                }
-            
-                return true;
-            }));
-
-            /*var addMenu = menu.Add("Config");
-            addMenu.SetShowAsAction(ShowAsAction.Always);
-            addMenu.SetOnMenuItemClickListener(new DelegatedMenuItemListener(OnConfigClicked));*/
-
-            var cleanMenu = menu.Add("Clean");
-            cleanMenu.SetShowAsAction(ShowAsAction.Always);
-            cleanMenu.SetOnMenuItemClickListener(new DelegatedMenuItemListener(OnCleanClicked));
+            var infalter = MenuInflater;
+            infalter.Inflate(Resource.Layout.MainMenu, menu);
 
             return true;
         }
 
-       /* private bool OnConfigClicked(IMenuItem menuItem)
+        public override bool OnOptionsItemSelected(IMenuItem item)
         {
-            var activity = new Intent (this, typeof(ConfigActivity));
-            StartActivity(activity);
-            return true;
-        }*/
+            switch(item.ItemId) {
+                case Resource.Id.action_main_clean:
+                    OnCleanClicked(item);
+                    return true;
+                case Resource.Id.action_main_logout:
+                    Logout();
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        /* private bool OnConfigClicked(IMenuItem menuItem)
+         {
+             var activity = new Intent (this, typeof(ConfigActivity));
+             StartActivity(activity);
+             return true;
+         }*/
 
         private bool OnCleanClicked(IMenuItem menuItem)
         {
