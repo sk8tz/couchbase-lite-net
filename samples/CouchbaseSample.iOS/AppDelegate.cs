@@ -291,7 +291,7 @@ namespace CouchbaseSample
                 _pull.Stop ();
                 _pull.Changed -= ReplicationProgress;
                 if (clearCredentials) {
-                    _pull.RemoveStoredCredentials ();
+                    _pull.ClearAuthenticationStores ();
                 }
 
                 _pull = null;
@@ -301,7 +301,7 @@ namespace CouchbaseSample
                 _push.Stop ();
                 _push.Changed -= ReplicationProgress;
                 if (clearCredentials) {
-                    _push.RemoveStoredCredentials ();
+                    _push.ClearAuthenticationStores ();
                 }
 
                 _push = null;
@@ -313,10 +313,11 @@ namespace CouchbaseSample
         private void ReplicationProgress(object sender, ReplicationChangeEventArgs args)
         {
             UIApplication.SharedApplication.NetworkActivityIndicatorVisible = 
-                _pull.Status == ReplicationStatus.Active || _push.Status == ReplicationStatus.Active;
+                _pull != null && _pull.Status == ReplicationStatus.Active || 
+                _push != null && _push.Status == ReplicationStatus.Active;
 
-            var error = _pull.LastError ?? _push.LastError;
-            if (error != _syncError) {
+            var error = _pull?.LastError ?? _push?.LastError;
+            if (error != null && error != _syncError) {
                 _syncError = error;
                 ShowAlert ("Sync Error", error, false);
             }
