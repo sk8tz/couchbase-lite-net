@@ -17,7 +17,35 @@
 				}
 			},
 			"bucket": "testing",
-			"sync": "function(doc) {channel(doc.channels);}"
+			"sync": "function(doc) {channel(doc.channels);}",
+      "oidc": {
+        "providers": {
+          "AzureAuthFlow": {
+                "issuer":"https://sts.windows.net/4568c9de-f3e1-414e-866b-ca0c5f80c6cd/",
+                "client_id":"736dd080-2274-4fd1-9089-740ea0f44205",
+                "validation_key":"bYUzDq99U6GZl/useE17wr6E9Br2F7OBMLIIcFUkrB8=",
+                "register":true
+        },"SgwTest": {
+            "issuer": "http://localhost:4984/grocery-sync/_oidc_testing",
+            "client_id": "sync_gateway",
+            "validation_key": "R75hfd9lasdwertwerutecw8",
+            "register": true
+          },
+          "GoogleAuthFlow": {
+            "issuer": "https://accounts.google.com",
+            "client_id": "31919031332-8ea1795ckkphb7hmg6i4ul0blcpq8oq5.apps.googleusercontent.com",
+            "validation_key": "OCIbokd6-SE8LMZE_vQsq8F5",
+                        "callback_url":"http://localhost:4984/openid_db/_oidc_callback",
+            "register": true
+          },
+          "GoogleSignIn": {
+            "issuer": "https://accounts.google.com",
+            "client_id": "31919031332-sjiopc9dnh217somhc94b3s1kt7oe2mu.apps.googleusercontent.com",
+            "register": true
+          }
+        },
+        "default_provider": "AzureAuthFlow"
+      }
 		},
 		"openid_db": {
 			"server": "walrus:",
@@ -38,7 +66,12 @@
 			},
 			"oidc": {
 				"providers": {
-					"SgwTest": {
+					"AzureAuthFlow": {
+                "issuer":"https://sts.windows.net/4568c9de-f3e1-414e-866b-ca0c5f80c6cd/",
+                "client_id":"736dd080-2274-4fd1-9089-740ea0f44205",
+                "validation_key":"bYUzDq99U6GZl/useE17wr6E9Br2F7OBMLIIcFUkrB8=",
+                "register":true
+        },"SgwTest": {
 						"issuer": "http://localhost:4984/grocery-sync/_oidc_testing",
 						"client_id": "sync_gateway",
 						"validation_key": "R75hfd9lasdwertwerutecw8",
@@ -57,7 +90,7 @@
 						"register": true
 					}
 				},
-				"default_provider": "GoogleAuthFlow"
+				"default_provider": "AzureAuthFlow"
 			},
 			"facebook": {
 				"register": true

@@ -118,7 +118,7 @@ namespace CouchbaseSample.Android
 
         private bool IsReplicationStarted(Replication repl)
         {
-            return repl.Status == ReplicationStatus.Idle && repl.ChangesCount > 0;
+            return repl.Status == ReplicationStatus.Idle || repl.ChangesCount > 0;
         }
 
         private void CheckAuthCodeLoginComplete(Replication repl)
@@ -171,6 +171,9 @@ namespace CouchbaseSample.Android
             if(pull != null) {
                 pull.Stop();
                 pull.Changed -= OnChanged;
+                if (clearCredentials) {
+                    pull.ClearAuthenticationStores();
+                }
             }
 
             var push = _push;
@@ -178,6 +181,9 @@ namespace CouchbaseSample.Android
             if(push != null) {
                 push.Stop();
                 push.Changed -= OnChanged;
+                if (clearCredentials) {
+                    push.ClearAuthenticationStores();
+                }
             }
         }
 
@@ -197,6 +203,8 @@ namespace CouchbaseSample.Android
             if(error != _syncError) {
                 _syncError = error;
                 ShowMessage(_syncError.ToString());
+                _push?.ClearAuthenticationStores();
+                _pull?.ClearAuthenticationStores();
             }
         }
 

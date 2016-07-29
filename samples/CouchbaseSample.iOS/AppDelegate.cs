@@ -320,6 +320,8 @@ namespace CouchbaseSample
             if (error != null && error != _syncError) {
                 _syncError = error;
                 ShowAlert ("Sync Error", error, false);
+                _pull?.ClearAuthenticationStores ();
+                _push?.ClearAuthenticationStores ();
             }
         }
     }
