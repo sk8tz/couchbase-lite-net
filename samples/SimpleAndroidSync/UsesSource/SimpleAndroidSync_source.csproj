@@ -35,7 +35,7 @@
     <ConsolePause>false</ConsolePause>
     <AndroidLinkSkip />
     <EmbedAssembliesIntoApk>True</EmbedAssembliesIntoApk>
-    <AndroidSupportedAbis>armeabi,armeabi-v7a,x86,x86_64,arm64-v8a</AndroidSupportedAbis>
+    <AndroidSupportedAbis>armeabi;armeabi-v7a;x86;x86_64;arm64-v8a</AndroidSupportedAbis>
     <AndroidStoreUncompressedFileExtensions />
     <MandroidI18n />
     <Debugger>Xamarin</Debugger>
@@ -103,15 +103,14 @@
       <HintPath>..\..\..\src\packages\Xamarin.GooglePlayServices.Basement.29.0.0.2\lib\MonoAndroid41\Xamarin.GooglePlayServices.Basement.dll</HintPath>
       <Private>True</Private>
     </Reference>
-    <Reference Include="Xamarin.GooglePlayServices.Plus, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\..\..\src\packages\Xamarin.GooglePlayServices.Plus.29.0.0.2\lib\MonoAndroid41\Xamarin.GooglePlayServices.Plus.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
     <Reference Include="SQLitePCL.raw">
       <HintPath>..\..\..\src\packages\SQLitePCL.raw.0.9.1\lib\MonoAndroid\SQLitePCL.raw.dll</HintPath>
     </Reference>
     <Reference Include="SQLitePCL.ugly">
       <HintPath>..\..\..\src\packages\SQLitePCL.ugly.0.9.1\lib\portable-net45+netcore45+wp8+MonoAndroid10+MonoTouch10+Xamarin.iOS10\SQLitePCL.ugly.dll</HintPath>
+    </Reference>
+    <Reference Include="Xamarin.GooglePlayServices.Identity">
+      <HintPath>..\..\..\src\packages\Xamarin.GooglePlayServices.Identity.29.0.0.2\lib\MonoAndroid41\Xamarin.GooglePlayServices.Identity.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>

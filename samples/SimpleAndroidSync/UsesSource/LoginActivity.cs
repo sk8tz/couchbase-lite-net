@@ -146,8 +146,7 @@ namespace SimpleAndroidSync
             authSignInCodeButton.Click += OpenIDButtonClicked;
 
             var gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DefaultSignIn)
-                .RequestScopes(new Scope(Scopes.PlusLogin))
-                .RequestScopes(new Scope(Scopes.PlusMe))
+                .RequestIdToken(GetString(Resource.String.server_client_id))
                 .Build();
 
             _googleApiClient = new GoogleApiClient.Builder(Application.Context)

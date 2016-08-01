@@ -215,7 +215,7 @@ namespace CouchbaseSample.Android
                 StartPull(r =>
                 {
                     foreach(var cookie in cookies) {
-                        r.SetCookie(cookie.Name(), cookie.Value(), cookie.Path(), epoch + TimeSpan.FromSeconds(cookie.ExpiresAt()),
+                        r.SetCookie(cookie.Name(), cookie.Value(), cookie.Path(), epoch + TimeSpan.FromMilliseconds(cookie.ExpiresAt()),
                             cookie.Secure(), cookie.HttpOnly());
                     }
                 });
@@ -223,7 +223,7 @@ namespace CouchbaseSample.Android
                 StartPush(r =>
                 {
                     foreach(var cookie in cookies) {
-                        r.SetCookie(cookie.Name(), cookie.Value(), cookie.Path(), epoch + TimeSpan.FromSeconds(cookie.ExpiresAt()),
+                        r.SetCookie(cookie.Name(), cookie.Value(), cookie.Path(), epoch + TimeSpan.FromMilliseconds(cookie.ExpiresAt()),
                             cookie.Secure(), cookie.HttpOnly());
                     }
                 });

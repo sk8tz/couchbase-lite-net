@@ -44,7 +44,7 @@
             "register": true
           }
         },
-        "default_provider": "AzureAuthFlow"
+        "default_provider": "GoogleSignIn"
       }
 		},
 		"openid_db": {
