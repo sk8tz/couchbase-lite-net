@@ -226,7 +226,7 @@ namespace Couchbase.Lite.Store
                 ms.Write(_cryptor.IV, 0, IV_SIZE);
                 cs.Write(data, 0, data.Length);
                 cs.FlushFinalBlock();
-                encrypted = ms.GetBuffer().Take((int)ms.Length).ToArray();
+                encrypted = ((RecyclableMemoryStream)ms).GetBuffer().Take((int)ms.Length).ToArray();
             }
 
             return encrypted;

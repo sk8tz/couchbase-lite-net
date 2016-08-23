@@ -38,11 +38,13 @@ namespace Couchbase.Lite.Util
     /// <summary>
     /// A class that encapsulates a portion of an array
     /// </summary>
+#if !WINDOWS_UWP
     [Serializable]
+#endif
     public struct ArraySegment<T> : IList<T>, IEquatable<ArraySegment<T>>
     {
 
-        #region Properties
+#region Properties
 
         /// <summary>
         /// Gets the original array used to generate this segment
@@ -60,9 +62,9 @@ namespace Couchbase.Lite.Util
         /// <value>The count.</value>
         public int Count { get; private set; }
 
-        #endregion
+#endregion
 
-        #region Constructors
+#region Constructors
 
         /// <summary>
         /// Default constructor
@@ -109,10 +111,10 @@ namespace Couchbase.Lite.Util
             Count = array.Length;
         }
 
-        #endregion
+#endregion
 
-        #region Overrides
-        #pragma warning disable 1591
+#region Overrides
+#pragma warning disable 1591
 
         public override bool Equals (Object obj)
         {
@@ -127,10 +129,10 @@ namespace Couchbase.Lite.Util
             return ((Array.GetHashCode() ^ Offset) ^ Count);
         }
 
-        #pragma warning restore 1591
-        #endregion
+#pragma warning restore 1591
+#endregion
 
-        #region Operators
+#region Operators
 
         /// <param name="a">The alpha component.</param>
         /// <param name="b">The blue component.</param>
@@ -146,9 +148,9 @@ namespace Couchbase.Lite.Util
             return !(a.Equals(b));
         }
 
-        #endregion
+#endregion
 
-        #region IEquatable
+#region IEquatable
 
         bool IEquatable<ArraySegment<T>>.Equals(ArraySegment<T> obj)
         {
@@ -157,9 +159,9 @@ namespace Couchbase.Lite.Util
             return false;
         }
 
-        #endregion
+#endregion
 
-        #region IList
+#region IList
 
         bool ICollection<T>.IsReadOnly
         {
@@ -236,6 +238,6 @@ namespace Couchbase.Lite.Util
             return res < 0 ? -1 : res - Offset;
         }
 
-        #endregion
+#endregion
     }
 }

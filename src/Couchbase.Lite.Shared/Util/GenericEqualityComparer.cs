@@ -26,10 +26,12 @@ namespace Couchbase.Lite
     /// <summary>
     /// A simple equality comparer that just calls default functions
     /// </summary>
+#if !WINDOWS_UWP
     [Serializable]
+#endif
     public sealed class GenericEqualityComparer <T> : EqualityComparer <T> where T : IEquatable <T> {
 
-        #pragma warning disable 1591
+#pragma warning disable 1591
 
         public override int GetHashCode (T obj)
         {
@@ -49,7 +51,7 @@ namespace Couchbase.Lite
             return x.Equals (y);
         }
 
-        #pragma warning restore 1591
+#pragma warning restore 1591
     }
 }
 

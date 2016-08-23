@@ -10,13 +10,21 @@ namespace Couchbase.Lite.Util
     {
         private const string Tag = "SingleThreadScheduler";
         private readonly LinkedList<Task> _jobQueue;
-        private readonly Thread _thread;
+#if WINDOWS_UWP
+        private int? _specialThreadId;
+#else
+        private Thread _thread;
+#endif
         private bool _disposed;
         private ManualResetEventSlim _mre = new ManualResetEventSlim();
 
         public bool IsOnSpecialThread {
             get {
+#if WINDOWS_UWP
+                return Environment.CurrentManagedThreadId == _specialThreadId;
+#else
                 return Thread.CurrentThread.ManagedThreadId == _thread.ManagedThreadId;
+#endif
             }
         }
 
@@ -24,14 +32,10 @@ namespace Couchbase.Lite.Util
         {
             Log.To.TaskScheduling.I(Tag, "New single thread task scheduler created with private thread");
             _jobQueue = new LinkedList<Task>();
-            _thread = new Thread(Run) 
-            {
-                Name = "Database Thread",
-                IsBackground = true
-            };
-            _thread.Start();
+            Task.Factory.StartNew(Run, TaskCreationOptions.LongRunning);
         }
 
+#if !WINDOWS_UWP
         public SingleThreadScheduler(Thread thread, LinkedList<Task> jobQueue)
         {
             if (thread == null)
@@ -49,6 +53,7 @@ namespace Couchbase.Lite.Util
             _thread = thread;
             _jobQueue = jobQueue;
         }
+#endif
 
         internal void TryExecuteTaskHack(Task task)
         {
@@ -64,7 +69,7 @@ namespace Couchbase.Lite.Util
                 return;
             }
 
-            if (Thread.CurrentThread == _thread) {
+            if (IsOnSpecialThread) {
                 Log.To.TaskScheduling.V(Tag, "Executing re-entrant task out of order");
                 TryExecuteTask(task);
                 return;
@@ -118,7 +123,7 @@ namespace Couchbase.Lite.Util
             }
         }
 
-        #region IDisposable implementation
+#region IDisposable implementation
 
         public void Dispose()
         {
@@ -142,12 +147,12 @@ namespace Couchbase.Lite.Util
             }
         }
 
-        #endregion
+#endregion
 
         protected override bool TryExecuteTaskInline(Task task, bool taskWasPreviouslyQueued) 
         {
             Log.To.TaskScheduling.V(Tag, "TryExecuteTaskInline invoked...");
-            if (Thread.CurrentThread == _thread) {
+            if (IsOnSpecialThread) {
                 if (taskWasPreviouslyQueued) {
                     if (TryDequeue(task)) {
                         Log.To.TaskScheduling.V(Tag, "...executing previously queued Task!");

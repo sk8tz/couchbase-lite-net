@@ -99,7 +99,7 @@ namespace Couchbase.Lite
                 return false;
             }
 
-            return id[0] != '_' || id.StartsWith("_design/", StringComparison.InvariantCultureIgnoreCase);
+            return id[0] != '_' || id.StartsWith("_design/", StringComparison.OrdinalIgnoreCase);
         }
 
         #region Instance Members

@@ -44,140 +44,67 @@
 namespace Couchbase.Lite.Util
 {
     using System;
+    using System.Collections.Generic;
     using System.IO;
+    using System.Linq;
     using System.Security.Cryptography;
 
-    internal abstract class MessageDigest
+    internal class MessageDigest
     {
+        private readonly HashAlgorithm _hash;
+        private List<byte> _buffer = new List<byte>();
 
         #region Constructors
 
-        protected MessageDigest ()
+        protected MessageDigest (HashAlgorithm algorithm)
         {
+            _hash = algorithm;
         }
 
         #endregion
 
         #region Public Methods
 
-        public abstract byte[] Digest ();
-        public abstract int GetDigestLength ();
+        public byte[] Digest ()
+        {
+            return _hash.ComputeHash(_buffer.ToArray());
+        }
+        public int GetDigestLength ()
+        {
+            return (_hash.HashSize / 8);
+        }
+
         public static MessageDigest GetInstance (string algorithm)
         {
             switch (algorithm.ToLower ()) {
                 case "sha-1":
-                    return new MessageDigest<SHA1Managed> ();
+                    return new MessageDigest (SHA1.Create());
+
                 case "md5":
-                    return new MessageDigest<MD5CryptoServiceProvider> ();
+                    return new MessageDigest (MD5.Create());
             }
 
             throw new NotSupportedException (string.Format ("The requested algorithm \"{0}\" is not supported.", algorithm));
         }
 
-        public abstract void Reset ();
-        public abstract void Update (byte[] input);
-        public abstract void Update (byte input);
-        public abstract void Update (byte[] input, int offset, int len);
+        public void Reset ()
+        {
+            _buffer.Clear();
+        }
+        public void Update (byte[] input)
+        {
+            _buffer.AddRange(input);
+        }
+        public void Update (byte input)
+        {
+            _buffer.Add(input);
+        }
+        public void Update (byte[] input, int offset, int len)
+        {
+            _buffer.AddRange(input.Skip(offset).Take(len));
+        }
 
         #endregion
     }
-
-
-    internal class MessageDigest<TAlgorithm> : MessageDigest where TAlgorithm : HashAlgorithm, new()
-    {
-
-        #region Variables
-
-        private TAlgorithm _hash;
-        private CryptoStream _stream;
-
-        #endregion
-
-        #region Constructors
-
-        public MessageDigest ()
-        {
-        }
-
-        #endregion
-
-        #region Public Methods
-
-        public override byte[] Digest ()
-        {
-            _stream.FlushFinalBlock ();
-            byte[] hash = _hash.Hash;
-            Clear ();
-            return hash;
-        }
-
-        public void Clear ()
-        {
-            var stream = _stream;
-            _stream = null;
-            if (stream != null) {
-                stream.Dispose ();
-#if !NET_3_5
-                _hash.Dispose ();
-#endif
-            }
-        }
-
-#endregion
-
-#region Private Methods
-
-        private void Init ()
-        {
-            if (_hash == null) {
-                _hash = Activator.CreateInstance<TAlgorithm> ();
-            }
-
-            if (_stream == null) {
-                _stream = new CryptoStream (Stream.Null, _hash, CryptoStreamMode.Write);
-            }
-        }
-
-
-#endregion
-
-#region Overrides
-
-        public override int GetDigestLength ()
-        {
-            return (_hash.HashSize / 8);
-        }
-
-
-        public override void Reset ()
-        {
-            Clear ();
-            Init ();
-        }
-
-        public override void Update (byte[] input)
-        {
-            Init();
-            _stream.Write (input, 0, input.Length);
-        }
-
-        public override void Update (byte input)
-        {
-            Init();
-            _stream.WriteByte (input);
-        }
-
-        public override void Update (byte[] input, int index, int count)
-        {
-            if (count < 0) {
-                throw new ArgumentOutOfRangeException("count", "must be greater than or equal to zero");
-            }
-
-            Init();
-            _stream.Write (input, index, count);
-        }
-
-#endregion
-
-    }
+   
 }

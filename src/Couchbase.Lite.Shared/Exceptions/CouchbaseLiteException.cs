@@ -48,7 +48,9 @@ namespace Couchbase.Lite {
     /// <summary>
     /// The main class of exception used for indicating Couchbase Lite errors
     /// </summary>
+#if !WINDOWS_UWP
     [Serializable]
+#endif
     public class CouchbaseLiteException : Exception {
 
         internal StatusCode Code { get; set; }
@@ -118,6 +120,7 @@ namespace Couchbase.Lite {
         public CouchbaseLiteException (String messageFormat, params Object[] values)
             : base(String.Format(messageFormat, values)) {  }
 
+        #if !WINDOWS_UWP
         /// <summary>
         /// The constructor for ISerializable
         /// </summary>
@@ -128,6 +131,7 @@ namespace Couchbase.Lite {
         {
             Code = (StatusCode)info.GetInt32("CBLStatus");
         }
+#endif
 
         /// <summary>
         /// Gets the Status object holding the error code for this exception
@@ -139,6 +143,7 @@ namespace Couchbase.Lite {
             return new Status(Code);
         }
 
+        #if !WINDOWS_UWP
 #pragma warning disable 1591
 
         public override void GetObjectData(SerializationInfo info, StreamingContext context)
@@ -149,6 +154,7 @@ namespace Couchbase.Lite {
         }
 
 #pragma warning restore 1591
+#endif
     }
 
 }

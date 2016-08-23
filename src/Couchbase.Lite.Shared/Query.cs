@@ -83,7 +83,9 @@ namespace Couchbase.Lite {
     /// </item>    
     /// </list>
     /// </summary>
+#if !WINDOWS_UWP
     [Serializable]
+#endif
     public enum IndexUpdateMode {
             /// <summary>
             /// If needed, update the index before running the <see cref="Couchbase.Lite.Query"/> (default). 
@@ -102,11 +104,13 @@ namespace Couchbase.Lite {
             /// </summary>
             After
     }
-            
+
     /// <summary>
     /// Options for specifying the mode that an all documents query should run in
     /// </summary>
+#if !WINDOWS_UWP
     [Serializable]
+#endif
     public enum AllDocsMode
     {
         /// <summary>
@@ -138,13 +142,13 @@ namespace Couchbase.Lite {
     public class Query : IDisposable
     {
 
-        #region Constants
+#region Constants
 
         private const string TAG = "Query";
 
-        #endregion
+#endregion
 
-        #region Variables
+#region Variables
 
         /// <summary>
         /// Event raised when a query has finished running.
@@ -161,9 +165,9 @@ namespace Couchbase.Lite {
         /// </summary>
         protected readonly TaskFactory _eventContext;
 
-        #endregion
+#endregion
 
-        #region Properties
+#region Properties
 
         /// <summary>
         /// Gets the <see cref="Couchbase.Lite.Database"/> that owns 
@@ -369,9 +373,9 @@ namespace Couchbase.Lite {
             }
         }
 
-        #endregion
+#endregion
 
-        #region Constructors
+#region Constructors
 
         // null view for _all_docs query
         internal Query(Database database, View view)
@@ -397,10 +401,10 @@ namespace Couchbase.Lite {
             View.SetMap(mapFunction, string.Empty);
         }
 
-        #endregion
+#endregion
        
 
-        #region Public Methods
+#region Public Methods
 
         /// <summary>
         /// Runs the <see cref="Couchbase.Lite.Query"/> and returns an enumerator over the result rows.
@@ -481,9 +485,9 @@ namespace Couchbase.Lite {
             return new LiveQuery(this);
         }
 
-        #endregion
+#endregion
 
-        #region Protected Methods
+#region Protected Methods
 
         /// <summary>
         /// Disposes the resources of this object
@@ -500,9 +504,9 @@ namespace Couchbase.Lite {
                 View.Delete();
         }
 
-        #endregion
+#endregion
 
-        #region Overrides
+#region Overrides
 #pragma warning disable 1591
 
         public override string ToString()
@@ -519,9 +523,9 @@ namespace Couchbase.Lite {
                 IncludeDeleted, PostFilter, PrefixMatchLevel, Environment.NewLine);
         }
 
-        #endregion
+#endregion
 
-        #region IDisposable
+#region IDisposable
 
 
         /// <summary>
@@ -537,8 +541,8 @@ namespace Couchbase.Lite {
             GC.SuppressFinalize(this);
         }
     
-        #pragma warning restore 1591
-        #endregion    
+#pragma warning restore 1591
+#endregion
     }
 }
 

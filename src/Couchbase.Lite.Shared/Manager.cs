@@ -158,10 +158,12 @@ namespace Couchbase.Lite
             // and this is only needed by the default constructor or when accessing the SharedInstanced
             // So, let's only set it only when GetFolderPath returns something and allow the directory to be
             // manually specified via the ctor that accepts a DirectoryInfo
-            #if __UNITY__
+#if __UNITY__
             string defaultDirectoryPath = Unity.UnityMainThreadScheduler.PersistentDataPath;
 
-            #else
+#elif WINDOWS_UWP
+            var defaultDirectoryPath = Windows.Storage.ApplicationData.Current.LocalFolder.Path;
+#else
             var defaultDirectoryPath = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
             #endif
             if (!StringEx.IsNullOrWhiteSpace(defaultDirectoryPath))
@@ -172,19 +174,27 @@ namespace Couchbase.Lite
 
             var gitVersion= String.Empty;
             var branchName = String.Empty;
+#if !WINDOWS_UWP
             ReadVersion(Assembly.GetExecutingAssembly(), out branchName, out gitVersion);
+#else
+            ReadVersion(typeof(Manager).GetTypeInfo().Assembly, out branchName, out gitVersion);
+#endif
 
+#if !WINDOWS_UWP
             var infoVersion = Attribute.GetCustomAttribute(Assembly.GetExecutingAssembly(), typeof(AssemblyInformationalVersionAttribute))
                 as AssemblyInformationalVersionAttribute;
-            
+#else
+            var infoVersion = typeof(Manager).GetTypeInfo().Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>();
+#endif
+
             bool unofficial = infoVersion == null || infoVersion.InformationalVersion.StartsWith("0.0.0");
-            #if DEBUG
+#if DEBUG
             var versionNumber = infoVersion == null || infoVersion.InformationalVersion.StartsWith("0.0.0") ?
                 "Unofficial Debug" : infoVersion.InformationalVersion + " Debug";
-            #else
+#else
             var versionNumber = infoVersion == null || infoVersion.InformationalVersion.StartsWith("0.0.0") ?
                 "Unofficial" : infoVersion.InformationalVersion;
-            #endif
+#endif
 
             if (unofficial) {
                 VersionString = String.Format(".NET {0}/{1} {2} ({3})/{4}", PLATFORM, Platform.Architecture, versionNumber, branchName.Replace('/', '\\'), 
@@ -194,6 +204,7 @@ namespace Couchbase.Lite
             }
 
             Log.To.NoDomain.I(TAG, "Starting Manager version: {0}", VersionString);
+#if !WINDOWS_UWP
             AppDomain.CurrentDomain.AssemblyLoad += (sender, args) => 
             {
                 if (ReadVersion(args.LoadedAssembly, out branchName, out gitVersion)) {
@@ -208,6 +219,7 @@ namespace Couchbase.Lite
                         assembly.FullName, gitVersion);
                 }
             }
+#endif
         }
 
         /// <summary>

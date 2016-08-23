@@ -48,27 +48,19 @@ namespace Couchbase.Lite
 
         public bool CanReach(string remoteUri, TimeSpan timeout)
         {
+#if !WINDOWS_UWP
             CouchbaseLiteHttpClientFactory.SetupSslCallback();
-            HttpWebRequest request;
+#endif
+            HttpWebRequest request = WebRequest.CreateHttp(remoteUri); ;
 
-            var uri = new Uri (remoteUri);
-            var credentials = uri.UserInfo;
-            if (!String.IsNullOrEmpty(credentials)) {
-                remoteUri = string.Format ("{0}://{1}{2}", uri.Scheme, uri.Authority, uri.PathAndQuery);
-                request = WebRequest.CreateHttp (remoteUri);
-                request.Headers.Add ("Authorization", "Basic " + Convert.ToBase64String (Encoding.UTF8.GetBytes (credentials)));
-                request.PreAuthenticate = true;
-            }
-            else {
-                request = WebRequest.CreateHttp (remoteUri);
-            }
-
+#if !WINDOWS_UWP
             request.AllowWriteStreamBuffering = true;
             request.Timeout = (int)timeout.TotalMilliseconds;
+#endif
             request.Method = "HEAD";
 
             try {
-                using(var response = (HttpWebResponse)request.GetResponse()) {
+                using(var response = (HttpWebResponse)request.GetResponseAsync().Result) {
                     return true; //We only care that the server responded
                 }
             } catch(Exception e) {

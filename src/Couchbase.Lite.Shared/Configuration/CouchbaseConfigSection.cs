@@ -19,7 +19,7 @@
 // limitations under the License.
 //
 
-#if !__IOS__ && !__ANDROID__ && !NET_3_5
+#if !__IOS__ && !__ANDROID__ && !NET_3_5 && !WINDOWS_UWP
 using System;
 using System.Configuration;
 using System.Collections.Generic;
@@ -34,13 +34,13 @@ namespace Couchbase.Lite.Configuration
     public sealed class CouchbaseConfigurationHandler : IConfigurationSectionHandler
     {
 
-        #region Constants
+#region Constants
 
         private const string Tag = nameof(CouchbaseConfigurationHandler);
 
-        #endregion
+#endregion
 
-        #region IConfigurationSectionHandler implementation
+#region IConfigurationSectionHandler implementation
 #pragma warning disable 1591
 
         public object Create(object parent, object configContext, XmlNode section)
@@ -58,7 +58,7 @@ namespace Couchbase.Lite.Configuration
         }
 
 #pragma warning restore 1591
-        #endregion
+#endregion
     }
 
     internal sealed class CouchbaseConfigSection

@@ -115,10 +115,14 @@ namespace Couchbase.Lite
 
             if (encodingType == "gzip") {
                 compressedStream = new GZipStream(stream, CompressionMode.Compress, true);
+#if !WINDOWS_UWP
                 compressedStream = new BufferedStream(compressedStream, 8192);
+#endif
             } else if (encodingType == "deflate") {
                 compressedStream = new DeflateStream(stream, CompressionMode.Compress, true);
+#if !WINDOWS_UWP
                 compressedStream = new BufferedStream(compressedStream, 8192);
+#endif
             }
 
             var retVal = originalContent.CopyToAsync(compressedStream).ContinueWith(t =>
@@ -138,8 +142,8 @@ namespace Couchbase.Lite
             originalContent.Dispose();
         }
 
-        #pragma warning restore 1591
-        #endregion
+#pragma warning restore 1591
+#endregion
     }
 }
 

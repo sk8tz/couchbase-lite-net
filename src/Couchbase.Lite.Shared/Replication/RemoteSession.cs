@@ -361,7 +361,7 @@ namespace Couchbase.Lite.Internal
                                     Log.To.Sync.W(Tag, "SendAsyncMultipartDownloaderRequest got an exception, aborting...", ex);
                                 } finally {
                                     try {
-                                        inputStream.Close();
+                                        inputStream.Dispose();
                                     } catch(Exception) { }
                                 }
                             } else {

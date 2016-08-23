@@ -72,41 +72,43 @@ namespace Couchbase.Lite
 
     #region Enums
 
-    /// <summary>
-    /// Describes the status of a <see cref="Couchbase.Lite.Replication"/>.
-    /// <list type="table">
-    /// <listheader>
-    /// <term>Name</term>
-    /// <description>Description</description>
-    /// </listheader>
-    /// <item>
-    /// <term>Stopped</term>
-    /// <description>
-    /// The <see cref="Couchbase.Lite.Replication"/> is finished or hit a fatal error.
-    /// </description>
-    /// </item>
-    /// <item>
-    /// <term>Offline</term>
-    /// <description>
-    /// The remote host is currently unreachable.
-    /// </description>
-    /// </item>
-    /// <item>
-    /// <term>Idle</term>
-    /// <description>
-    /// The continuous <see cref="Couchbase.Lite.Replication"/> is caught up and
-    /// waiting for more changes.
-    /// </description>
-    /// </item>
-    /// <item>
-    /// <term>Active</term>
-    /// <description>
-    /// The <see cref="Couchbase.Lite.Replication"/> is actively transferring data.
-    /// </description>
-    /// </item>
-    /// </list>
-    /// </summary>
+/// <summary>
+/// Describes the status of a <see cref="Couchbase.Lite.Replication"/>.
+/// <list type="table">
+/// <listheader>
+/// <term>Name</term>
+/// <description>Description</description>
+/// </listheader>
+/// <item>
+/// <term>Stopped</term>
+/// <description>
+/// The <see cref="Couchbase.Lite.Replication"/> is finished or hit a fatal error.
+/// </description>
+/// </item>
+/// <item>
+/// <term>Offline</term>
+/// <description>
+/// The remote host is currently unreachable.
+/// </description>
+/// </item>
+/// <item>
+/// <term>Idle</term>
+/// <description>
+/// The continuous <see cref="Couchbase.Lite.Replication"/> is caught up and
+/// waiting for more changes.
+/// </description>
+/// </item>
+/// <item>
+/// <term>Active</term>
+/// <description>
+/// The <see cref="Couchbase.Lite.Replication"/> is actively transferring data.
+/// </description>
+/// </item>
+/// </list>
+/// </summary>
+#if !WINDOWS_UWP
     [Serializable]
+#endif
     public enum ReplicationStatus {
         /// <summary>
         /// The <see cref="Couchbase.Lite.Replication"/> is finished or hit a fatal error.
@@ -127,7 +129,7 @@ namespace Couchbase.Lite
         Active
     }
 
-    #endregion
+#endregion
 
 #pragma warning disable 618
 
@@ -175,7 +177,7 @@ namespace Couchbase.Lite
     public abstract class Replication
     {
 
-        #region Constants
+#region Constants
 
         /// <summary>
         /// The protocol version to use when syncing with Sync Gateway.
@@ -201,9 +203,9 @@ namespace Couchbase.Lite
         private const string Tag = nameof(Replication);
         private const string LOCAL_CHECKPOINT_LOCAL_UUID_KEY = "localUUID";
 
-        #endregion
+#endregion
 
-        #region Variables
+#region Variables
 
         /// <summary>
         /// Adds or Removed a <see cref="Couchbase.Lite.Database"/> change delegate
@@ -268,9 +270,9 @@ namespace Couchbase.Lite
         private DateTime _startTime;
         internal RemoteSession _remoteSession;
 
-        #endregion
+#endregion
 
-        #region Properties
+#region Properties
 
         /// <summary>
         /// If applicable, will store the username of the logged in user once
@@ -537,13 +539,13 @@ namespace Couchbase.Lite
             }
         }
 
-        #pragma warning disable 618
+#pragma warning disable 618
         /// <summary>
         /// Gets or sets custom options on this replication
         /// </summary>
         [Obsolete("Replaced by ReplicationOptions")]
         public ReplicationOptionsDictionary Options { get; set; }
-        #pragma warning restore 618
+#pragma warning restore 618
 
         /// <summary>
         /// Gets or sets the replication options.
@@ -643,9 +645,9 @@ namespace Couchbase.Lite
         internal Func<RevisionInternal, RevisionInternal> RevisionBodyTransformationFunction { get; private set; }
 
 
-        #endregion
+#endregion
 
-        #region Constructors
+#region Constructors
 
         /// <summary>
         /// Convenience constructor
@@ -724,9 +726,9 @@ namespace Couchbase.Lite
             InitializeStateMachine();
         }
 
-        #endregion
+#endregion
 
-        #region Public Methods
+#region Public Methods
 
         /// <summary>
         /// Starts the <see cref="Couchbase.Lite.Replication"/>.
@@ -878,9 +880,9 @@ namespace Couchbase.Lite
             return true;
         }
 
-        #endregion
+#endregion
 
-        #region Protected Methods
+#region Protected Methods
 
         internal void DeleteAllCookies()
         {
@@ -940,13 +942,13 @@ namespace Couchbase.Lite
                 }
 
                 // If no 'status' present, interpret magic hardcoded CouchDB error strings:
-                if (errorStr.Equals("unauthorized", StringComparison.InvariantCultureIgnoreCase)) {
+                if (errorStr.Equals("unauthorized", StringComparison.OrdinalIgnoreCase)) {
                     return new Status(StatusCode.Unauthorized);
                 } else {
-                    if (errorStr.Equals("forbidden", StringComparison.InvariantCultureIgnoreCase)) {
+                    if (errorStr.Equals("forbidden", StringComparison.OrdinalIgnoreCase)) {
                         return new Status(StatusCode.Forbidden);
                     } else {
-                        if (errorStr.Equals("conflict", StringComparison.InvariantCultureIgnoreCase)) {
+                        if (errorStr.Equals("conflict", StringComparison.OrdinalIgnoreCase)) {
                             return new Status(StatusCode.Conflict);
                         } else {
                             return new Status(StatusCode.UpStreamError);
@@ -1227,9 +1229,9 @@ namespace Couchbase.Lite
             FireTrigger(ReplicationTrigger.StopImmediate);
         }
 
-        #endregion
+#endregion
 
-        #region Internal Methods
+#region Internal Methods
 
         internal abstract void BeginReplicating();
 
@@ -1424,9 +1426,9 @@ namespace Couchbase.Lite
             return Batcher.QueueObject(rev);
         }
 
-        #endregion
+#endregion
 
-        #region Private Methods
+#region Private Methods
 
         private void WaitForStopped (object sender, ReplicationChangeEventArgs e)
         {
@@ -1890,10 +1892,10 @@ namespace Couchbase.Lite
             }
         }
 
-        #endregion
+#endregion
     }
 
-    #region EventArgs Subclasses
+#region EventArgs Subclasses
 
     ///
     /// <see cref="Couchbase.Lite.Replication"/> Change Event Arguments.
@@ -1971,9 +1973,9 @@ namespace Couchbase.Lite
         }
     }
 
-    #endregion
+#endregion
 
-    #region Delegates
+#region Delegates
 
     /// <summary>
     /// The signature of a method that transforms a set of properties
@@ -1982,6 +1984,6 @@ namespace Couchbase.Lite
 
     internal delegate void SaveLastSequenceCompletionBlock();
 
-    #endregion
+#endregion
 
 }

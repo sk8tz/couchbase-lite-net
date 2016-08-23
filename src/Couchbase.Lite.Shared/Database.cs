@@ -879,7 +879,7 @@ namespace Couchbase.Lite
 
         internal static void RegisterStorageEngine(string identifier, Type type)
         {
-            if(type.GetInterface("Couchbase.Lite.Store.ICouchStore") == null) {
+            if(type.GetTypeInfo().GetInterface("Couchbase.Lite.Store.ICouchStore") == null) {
                 Log.To.Database.E(TAG, "Storage engine type {0} is not ICouchStore, throwing Exception...",
                     type.FullName);
                 throw new ArgumentException("Storage engine type is not ICouchStore");

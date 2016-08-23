@@ -146,7 +146,7 @@ namespace Couchbase.Lite.Util
         static Log()
         {
             Level = LogLevel.Base;
-            #if !__IOS__ && !__ANDROID__ && !NET_3_5
+            #if !__IOS__ && !__ANDROID__ && !NET_3_5 && !WINDOWS_UWP
             var configSection = System.Configuration.ConfigurationManager.GetSection("couchbaselite")
                 as Couchbase.Lite.Configuration.CouchbaseConfigSection;
             if(configSection != null && configSection.Logging != null) {
@@ -211,6 +211,7 @@ namespace Couchbase.Lite.Util
             return SetLogger(LoggerFactory.CreateLogger());
         }
 
+#if !WINDOWS_UWP
         /// <summary>
         /// Sets up Couchbase Lite to use the default logger (an internal class),
         /// with the specified logging level
@@ -239,6 +240,7 @@ namespace Couchbase.Lite.Util
 
             return SetLogger(LoggerFactory.CreateLogger());
         }
+#endif
 
         /// <summary>Send a VERBOSE message.</summary>
         /// <param name="tag">
@@ -427,7 +429,7 @@ namespace Couchbase.Lite.Util
             To.NoDomain.E(tag, format, args);
         }
 
-        #endregion
+#endregion
 
     }
 }

@@ -248,6 +248,7 @@ namespace Microsoft.IO
             {
                 // We're being finalized.
 
+#if !WINDOWS_UWP
                 if (AppDomain.CurrentDomain.IsFinalizingForUnload())
                 {
                     // If we're being finalized because of a shutdown, don't go any further.
@@ -256,6 +257,7 @@ namespace Microsoft.IO
                     base.Dispose(disposing);
                     return;
                 }
+#endif
 
                 this.memoryManager.ReportStreamFinalized(); 
             }
@@ -283,13 +285,17 @@ namespace Microsoft.IO
         /// <summary>
         /// Equivalent to Dispose
         /// </summary>
-        public override void Close()
+        public
+#if !WINDOWS_UWP
+            override
+#endif
+            void Close()
         {
             this.Dispose(true);
         }
-        #endregion
+#endregion
 
-        #region MemoryStream overrides
+#region MemoryStream overrides
         /// <summary>
         /// Gets or sets the capacity
         /// </summary>
@@ -408,7 +414,11 @@ namespace Microsoft.IO
         /// <remarks>IMPORTANT: Doing a Write() after calling GetBuffer() invalidates the buffer. The old buffer is held onto
         /// until Dispose is called, but the next time GetBuffer() is called, a new buffer from the pool will be required.</remarks>
         /// <exception cref="ObjectDisposedException">Object has been disposed</exception>
-        public override byte[] GetBuffer()
+        public
+#if !WINDOWS_UWP
+            override
+#endif
+            byte[] GetBuffer()
         {
             this.CheckDisposed();
 
@@ -751,9 +761,9 @@ namespace Microsoft.IO
                 stream.Write(this.largeBuffer, 0, this.length);
             }
         }
-        #endregion
+#endregion
 
-        #region Helper Methods
+#region Helper Methods
         private void CheckDisposed()
         {
             if (this.disposed)
@@ -860,6 +870,6 @@ namespace Microsoft.IO
 
             this.largeBuffer = null;
         }
-        #endregion
+#endregion
     }
 }

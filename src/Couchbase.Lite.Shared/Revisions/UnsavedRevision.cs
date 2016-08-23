@@ -231,7 +231,7 @@ namespace Couchbase.Lite
             newProps.PutAll(userProperties);
 
             foreach(string key in Properties.Keys) {
-                if(key.StartsWith("_", StringComparison.InvariantCultureIgnoreCase)) {
+                if(key.StartsWith("_", StringComparison.OrdinalIgnoreCase)) {
                     newProps[key] = properties.Get(key);
                 }
             }

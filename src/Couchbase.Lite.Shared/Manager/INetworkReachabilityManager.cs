@@ -30,10 +30,12 @@ namespace Couchbase.Lite
 
     #region Enum
 
-    /// <summary>
-    /// The current status of the network
-    /// </summary>
+/// <summary>
+/// The current status of the network
+/// </summary>
+#if !WINDOWS_UWP
     [Serializable]
+#endif
     public enum NetworkReachabilityStatus 
     {
         /// <summary>
@@ -50,9 +52,9 @@ namespace Couchbase.Lite
         Unreachable
     }
 
-    #endregion
+#endregion
 
-    #region EventArgs
+#region EventArgs
        
     // <see cref="Couchbase.Lite.Replication"/> Change Event Arguments.
 
@@ -81,6 +83,6 @@ namespace Couchbase.Lite
         }
     }
 
-    #endregion
+#endregion
 }
 

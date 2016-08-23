@@ -27,7 +27,7 @@ using System.Collections.Concurrent;
 using System.Threading;
 using Couchbase.Lite.Internal;
 
-#if !NET_3_5
+#if !NET_3_5 && !WINDOWS_UWP
 using System.IO.MemoryMappedFiles;
 #endif
 
@@ -366,7 +366,7 @@ namespace Couchbase.Lite.Util
 
             // Parse a JSON array from the file:
             var stream = default(Stream);
-#if !NET_3_5
+#if !NET_3_5 && !WINDOWS_UWP
             var mapped = default(MemoryMappedFile);
             try {
                 mapped = MemoryMappedFile.CreateFromFile(_path, FileMode.Open, "TimeSeries", 0, MemoryMappedFileAccess.Read);
@@ -389,7 +389,7 @@ namespace Couchbase.Lite.Util
                 return;
             } finally {
                 stream.Dispose();
-#if !NET_3_5
+#if !NET_3_5 && !WINDOWS_UWP
                 mapped.Dispose();
 #endif
             }

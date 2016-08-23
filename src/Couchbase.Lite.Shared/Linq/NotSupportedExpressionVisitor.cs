@@ -228,6 +228,7 @@ namespace Couchbase.Lite.Linq
             throw new NotSupportedException ();
         }
 
+        #if !WINDOWS_UWP
         protected override Expression VisitDynamic (DynamicExpression node)
         {
             if (_fromSubclass) {
@@ -237,6 +238,7 @@ namespace Couchbase.Lite.Linq
 
             throw new NotSupportedException ();
         }
+        #endif
 
         protected override Expression VisitListInit (ListInitExpression node)
         {

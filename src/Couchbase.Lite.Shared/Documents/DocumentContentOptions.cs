@@ -46,7 +46,9 @@ namespace Couchbase.Lite {
     /// Options for what metadata to include in document bodies
     /// </summary>
     [Flags]
+#if !WINDOWS_UWP
     [Serializable]
+#endif
     public enum DocumentContentOptions
     {
         /// <summary>

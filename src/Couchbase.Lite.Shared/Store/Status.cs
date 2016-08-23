@@ -49,7 +49,9 @@ namespace Couchbase.Lite
     /// A list of statuses indicating various results and/or errors for Couchbase Lite
     /// operations
     /// </summary>
+#if !WINDOWS_UWP
     [Serializable]
+#endif
     public enum StatusCode
     {
         /// <summary>
@@ -234,7 +236,7 @@ namespace Couchbase.Lite
     public class Status 
     {
 
-        #region Constants
+#region Constants
 
         private static readonly Dictionary<StatusCode, Tuple<int, string>> _StatusMap =
             new Dictionary<StatusCode, Tuple<int, string>>
@@ -278,9 +280,9 @@ namespace Couchbase.Lite
             { StatusCode.DbBusy, Tuple.Create(500, "Database locked") }
         };
 
-        #endregion
+#endregion
 
-        #region Properties
+#region Properties
 
         /// <summary>
         /// The status code that this object holds
@@ -303,9 +305,9 @@ namespace Couchbase.Lite
             get { return !IsSuccessful; }
         }
 
-        #endregion
+#endregion
 
-        #region Constructors
+#region Constructors
 
         /// <summary>
         /// Convenience constructor
@@ -324,9 +326,9 @@ namespace Couchbase.Lite
             Code = code;
         }
 
-        #endregion
+#endregion
 
-        #region Public Methods
+#region Public Methods
 
         /// <summary>
         /// Gets the status code
@@ -363,9 +365,9 @@ namespace Couchbase.Lite
             return Tuple.Create(-1, string.Empty);
         }
 
-        #endregion
+#endregion
 
-        #region Overrides
+#region Overrides
 
         /// <summary>
         /// Returns a <see cref="System.String"/> that represents the current <see cref="Couchbase.Lite.Status"/>.
@@ -376,7 +378,7 @@ namespace Couchbase.Lite
             return String.Format("Status: {0}", Code);
         }
 
-        #endregion
+#endregion
 
     }
 }

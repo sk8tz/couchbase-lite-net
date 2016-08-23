@@ -26,7 +26,9 @@ namespace Couchbase.Lite.Replicator
     /// <summary>
     /// The mode to send or request a changes feed in
     /// </summary>
+#if !WINDOWS_UWP
     [Serializable]
+#endif
     public enum ChangesFeedMode
     {
         /// <summary>

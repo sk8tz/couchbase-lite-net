@@ -18,7 +18,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-#if !WINDOWS_UWP
+#if WINDOWS_UWP
 using System;
 using System.IO;
 using System.Linq;
@@ -26,12 +26,13 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using Couchbase.Lite.Util;
-using WebSocketSharp;
 using Couchbase.Lite.Auth;
 using System.Collections.Generic;
 using Microsoft.IO;
 using System.Security.Authentication;
 using System.Net;
+using System.Net.WebSockets;
+using System.Text;
 
 namespace Couchbase.Lite.Internal
 {
@@ -47,20 +48,20 @@ namespace Couchbase.Lite.Internal
     internal class WebSocketChangeTracker : ChangeTracker
     {
         
-        #region Constants
+#region Constants
 
         private static readonly string Tag = typeof(WebSocketChangeTracker).Name;
 
-        #endregion
+#endregion
 
-        #region Variables
+#region Variables
 
-        private WebSocket _client;
+        private ClientWebSocket _client;
         private CancellationTokenSource _cts;
 
-        #endregion
+#endregion
 
-        #region Properties
+#region Properties
 
         public bool CanConnect { get; set; }
 
@@ -77,9 +78,9 @@ namespace Couchbase.Lite.Internal
             }
         }
 
-        #endregion
+#endregion
 
-        #region Constructors
+#region Constructors
 
         public WebSocketChangeTracker(ChangeTrackerOptions options) : base(options)
         {
@@ -87,28 +88,23 @@ namespace Couchbase.Lite.Internal
             CanConnect = true;
         }
 
-        #endregion
+#endregion
 
-        #region Private Methods
-
-        // Possibly unused, never seen it called
-        private void OnError(object sender, WebSocketSharp.ErrorEventArgs args)
-        {
-            Log.To.ChangeTracker.I(Tag, String.Format("{0} remote error {1}", this, args.Message), args.Exception);
-        }
+#region Private Methods
 
         // Called when the web socket connection is closed
-        private void OnClose(object sender, CloseEventArgs args)
+        private void OnClose(WebSocketCloseStatus status, string description)
         {
             if (_client != null) {
-                if (args.Code == (ushort)CloseStatusCode.ProtocolError) {
+                if (status == WebSocketCloseStatus.ProtocolError) {
                     // This is not a valid web socket connection, need to fall back to regular HTTP
                     CanConnect = false;
                     Stopped();
                 } else {
-                    Log.To.ChangeTracker.I(Tag, "{0} remote {1} closed connection ({2} {3})",
-                        this, args.WasClean ? "cleanly" : "forcibly", args.Code, args.Reason);
-                    Backoff.DelayAppropriateAmountOfTime().ContinueWith(t => _client?.ConnectAsync());
+                    Log.To.ChangeTracker.I(Tag, "{0} remote  closed connection ({2} {3})",
+                        this, status, description);
+                    Backoff.DelayAppropriateAmountOfTime().ContinueWith(t => _client?.ConnectAsync(ChangesFeedUrl, _cts.Token)
+                    .ContinueWith(t1 => OnConnect()));
                 }
             } else {
                 Log.To.ChangeTracker.I(Tag, "{0} is closed", this);
@@ -117,7 +113,7 @@ namespace Couchbase.Lite.Internal
         }
 
         // Called when the web socket establishes a connection
-        private void OnConnect(object sender, EventArgs args)
+        private void OnConnect()
         {
             if (_cts.IsCancellationRequested) {
                 Log.To.ChangeTracker.I(Tag, "{0} Cancellation requested, aborting in OnConnect", this);
@@ -140,30 +136,30 @@ namespace Couchbase.Lite.Internal
             // Now that the WebSocket is open, send the changes-feed options (the ones that would have
             // gone in the POST body if this were HTTP-based.)
             var bytes = GetChangesFeedPostBody().ToArray();
-            _client?.SendAsync(bytes, null);
+            _client?.SendAsync(new System.ArraySegment<byte>(bytes), WebSocketMessageType.Binary, true, CancellationToken.None);
         }
 
         // Called when a message is received
-        private void OnReceive(object sender, MessageEventArgs args)
+        private void OnReceive(WebSocketReceiveResult result, System.ArraySegment<byte> buffer)
         {
             if (_cts.IsCancellationRequested) {
                 Log.To.ChangeTracker.I(Tag, "{0} Cancellation requested, aborting in OnReceive", this);
                 return;
             }
 
-            if (args.IsPing) {
-                _client.Ping();
+            if(result.MessageType == WebSocketMessageType.Close) {
+                OnClose(result.CloseStatus.Value, result.CloseStatusDescription);
                 return;
             }
-                
+
             try {
-                if(args.RawData.Length == 0) {
+                if(buffer.Count == 0) {
                     return;
                 }
 
                 var code = ChangeTrackerMessageType.Unknown;
-                if(args.IsText) {
-                    if(args.RawData.Length == 2 && args.RawData[0] == '[' && args.RawData[1] == ']') {
+                if(result.MessageType == WebSocketMessageType.Text) {
+                    if(buffer.Count == 2 && buffer.ElementAt(0) == '[' && buffer.ElementAt(1) == ']') {
                         code = ChangeTrackerMessageType.EOF;
                     } else {
                         code = ChangeTrackerMessageType.Plaintext;
@@ -172,34 +168,36 @@ namespace Couchbase.Lite.Internal
                     code = ChangeTrackerMessageType.GZip;
                 }
 
-                var responseStream = RecyclableMemoryStreamManager.SharedInstance.GetStream("WebSocketChangeTracker", args.RawData.Length + 1);
+                var responseStream = RecyclableMemoryStreamManager.SharedInstance.GetStream("WebSocketChangeTracker", buffer.Count + 1);
                 try {
                     responseStream.WriteByte((byte)code);
-                    responseStream.Write(args.RawData, 0, args.RawData.Length);
+                    responseStream.Write(buffer.ToArray(), 0, buffer.Count);
                     responseStream.Seek(0, SeekOrigin.Begin);
                     _responseLogic.ProcessResponseStream(responseStream, _cts.Token);
                 } finally {
                     responseStream.Dispose();
                 }
             } catch(Exception e) {
-                Log.To.ChangeTracker.E(Tag, String.Format("{0} is not parseable", GetLogString(args)), e);
+                Log.To.ChangeTracker.E(Tag, String.Format("{0} is not parseable", GetLogString(result, buffer)), e);
+            } finally {
+                _client.ReceiveAsync(buffer, _cts.Token).ContinueWith(t => OnReceive(t.Result, buffer));
             }
         }
 
-        private string GetLogString(MessageEventArgs args)
+        private string GetLogString(WebSocketReceiveResult args, System.ArraySegment<byte> buffer)
         {
-            if(args.IsBinary) {
+            if(args.MessageType == WebSocketMessageType.Binary) {
                 return "<gzip stream>";
-            } else if(args.IsText) {
-                return args.Data;
+            } else if(args.MessageType == WebSocketMessageType.Text) {
+                return Encoding.UTF8.GetString(buffer.ToArray());
             }
 
             return null;
         }
 
-        #endregion
+#endregion
 
-        #region Overrides
+#region Overrides
             
         public override bool Start()
         {
@@ -218,24 +216,15 @@ namespace Couchbase.Lite.Internal
             // initial WebSocket message
             _usePost = false;
             _caughtUp = false;
-            _client = new WebSocket(ChangesFeedUrl.AbsoluteUri);
-            _client.WaitTime = TimeSpan.FromSeconds(2);
-            _client.OnOpen += OnConnect;
-            _client.OnMessage += OnReceive;
-            _client.OnError += OnError;
-            _client.OnClose += OnClose;
-            _client.SslConfiguration.EnabledSslProtocols = SslProtocols.Tls;
-            foreach(Cookie cookie in Client.GetCookieStore().GetCookies(ChangesFeedUrl)) {
-                _client.SetCookie(new WebSocketSharp.Net.Cookie(cookie.Name, cookie.Value, cookie.Path, cookie.Domain));
-            }
-
+            _client = new ClientWebSocket();
+            _client.Options.Cookies.Add(ChangesFeedUrl, Client.GetCookieStore().GetCookies(ChangesFeedUrl));
             if (authHeader != null) {
-                _client.CustomHeaders = new Dictionary<string, string> {
-                    ["Authorization"] = authHeader.ToString()
-                };
+                _client.Options.SetRequestHeader("Authorization", authHeader.ToString());
             }
 
-            _client.ConnectAsync();
+            var buffer = new System.ArraySegment<byte>();
+            _client.ConnectAsync(ChangesFeedUrl, _cts.Token).ContinueWith(t => OnConnect());
+            _client.ReceiveAsync(buffer, _cts.Token).ContinueWith(t => OnReceive(t.Result, buffer));
             return true;
         }
 
@@ -249,7 +238,7 @@ namespace Couchbase.Lite.Internal
             Misc.SafeNull(ref _client, c =>
             {
                 Log.To.ChangeTracker.I(Tag, "{0} requested to stop", this);
-                c.CloseAsync(CloseStatusCode.Normal);
+                c.CloseAsync(WebSocketCloseStatus.NormalClosure, "Client requested close", _cts.Token);
             });
         }
 
@@ -259,7 +248,7 @@ namespace Couchbase.Lite.Internal
             Misc.SafeDispose(ref _responseLogic);
         }
 
-        #endregion
+#endregion
     }
 }
 

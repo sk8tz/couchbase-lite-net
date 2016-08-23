@@ -49,7 +49,9 @@ namespace Couchbase.Lite
     /// <summary>
     /// An exception for encapsulating HTTP errors
     /// </summary>
+#if !WINDOWS_UWP
     [Serializable]
+#endif
     public class HttpResponseException : Exception
     {
 
@@ -72,6 +74,7 @@ namespace Couchbase.Lite
             StatusCode = HttpStatusCode.InternalServerError;
         }
 
+        #if !WINDOWS_UWP
         /// <summary>
         /// Constructor for ISerializable
         /// </summary>
@@ -82,6 +85,7 @@ namespace Couchbase.Lite
         {
             StatusCode = (HttpStatusCode)info.GetInt32("HttpResponseStatusCode");
         }
+#endif
 
 #pragma warning disable 1591
 
@@ -90,12 +94,14 @@ namespace Couchbase.Lite
             return string.Format ("[HttpResponseException: StatusCode = {0}]", StatusCode);
         }
 
+#if !WINDOWS_UWP
         public override void GetObjectData(SerializationInfo info, StreamingContext context)
         {
             base.GetObjectData(info, context);
 
             info.AddValue("HttpResponseStatusCode", (int)StatusCode);
         }
+#endif
 
 #pragma warning restore 1591
     }

@@ -54,7 +54,9 @@ namespace Couchbase.Lite {
     /// <summary>
     /// Indicates the collation to use for sorted items in the view
     /// </summary>
+#if !WINDOWS_UWP
     [Serializable]
+#endif
     public enum ViewCollation
     {
         /// <summary>
@@ -77,14 +79,14 @@ namespace Couchbase.Lite {
     /// </summary>
     public sealed class View : IViewStoreDelegate {
 
-        #region Constants
+#region Constants
 
         internal const string TAG = "View";
         private const int REDUCE_BATCH_SIZE = 100;
 
-        #endregion
+#endregion
 
-        #region Variables
+#region Variables
 
         private TypedEventHandler<View, EventArgs> _changed;
         internal event TypedEventHandler<View, EventArgs> Changed
@@ -93,9 +95,9 @@ namespace Couchbase.Lite {
             remove { _changed = (TypedEventHandler<View, EventArgs>)Delegate.Remove(_changed, value); }
         }
 
-        #endregion
+#endregion
 
-        #region Properties
+#region Properties
 
         /// <summary>
         /// Gets or sets an object that can compile source code into map and reduce delegates.
@@ -151,9 +153,9 @@ namespace Couchbase.Lite {
 
         internal ViewCollation Collation { get; set; }
 
-        #endregion
+#endregion
 
-        #region Constructors
+#region Constructors
 
         internal static View MakeView(Database database, string name, bool create)
         {
@@ -173,9 +175,9 @@ namespace Couchbase.Lite {
             return view;
         }
 
-        #endregion
+#endregion
     
-        #region Public Methods
+#region Public Methods
 
         /// <summary>
         /// Defines the <see cref="Couchbase.Lite.View"/>'s <see cref="Couchbase.Lite.MapDelegate"/> and sets 
@@ -297,10 +299,10 @@ namespace Couchbase.Lite {
             return new Query(Database, this);
         }
 
-        #endregion
+#endregion
    
 
-        #region Internal Methods
+#region Internal Methods
 
 
         internal void Close()
@@ -420,9 +422,9 @@ namespace Couchbase.Lite {
             return new Status(StatusCode.Ok);
         }
 
-        #endregion
+#endregion
 
-        #region Private Methods
+#region Private Methods
 
         private IEnumerable<View> ViewsInGroup()
         {
@@ -456,10 +458,10 @@ namespace Couchbase.Lite {
             return Reduce != null;
         }
 
-        #endregion
+#endregion
 
-        #region IViewStoreDelegate
-        #pragma warning disable 1591
+#region IViewStoreDelegate
+#pragma warning disable 1591
 
         public MapDelegate Map
         {
@@ -515,8 +517,8 @@ namespace Couchbase.Lite {
             }
         }
 
-        #pragma warning restore 1591
-        #endregion
+#pragma warning restore 1591
+#endregion
     
     }
 
@@ -545,7 +547,7 @@ namespace Couchbase.Lite {
 
     }
 
-    #region Global Delegates
+#region Global Delegates
 
     /// <summary>
     /// A delegate that is invoked when a <see cref="Couchbase.Lite.Document"/> 
@@ -571,6 +573,6 @@ namespace Couchbase.Lite {
     /// <param name="rereduce"><c>true</c> if the input values are the results of previous reductions, otherwise <c>false</c>.</param>
     public delegate object ReduceDelegate(IEnumerable<object> keys, IEnumerable<object> values, Boolean rereduce);
 
-    #endregion
+#endregion
 }
 

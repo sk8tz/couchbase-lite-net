@@ -50,7 +50,9 @@ using Couchbase.Lite.Revisions;
 
 namespace Couchbase.Lite
 {
+    #if !WINDOWS_UWP
     [System.Serializable]
+#endif
     internal sealed class RevisionList : List<RevisionInternal>
     {
         

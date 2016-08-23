@@ -74,6 +74,7 @@ namespace Couchbase.Lite.Support
             Headers = new ConcurrentDictionary<string, string>();
         }
 
+#if !WINDOWS_UWP
         internal static void SetupSslCallback()
         {
             // Disable SSL 3 fallback to mitigate POODLE vulnerability.
@@ -136,17 +137,25 @@ namespace Couchbase.Lite.Support
                 }
             };
         }
+#endif
 
         /// <summary>
         /// Build a pipeline of HttpMessageHandlers.
         /// </summary>
         internal HttpMessageHandler BuildHandlerPipeline (CookieStore store, IRetryStrategy retryStrategy)
         {
+#if WINDOWS_UWP
+            var handler = new HttpClientHandler {
+                CookieContainer = store,
+                UseCookies = true
+            };
+#else
             var handler = new WebRequestHandler {
                 CookieContainer = store,
                 UseCookies = true,
                 ReadWriteTimeout = (int)SocketTimeout.TotalMilliseconds
             };
+#endif
 
             // For now, we are not using the client cert for identity verification, just to
             // satisfy Mono so it doesn't matter if the user doesn't choose it.
