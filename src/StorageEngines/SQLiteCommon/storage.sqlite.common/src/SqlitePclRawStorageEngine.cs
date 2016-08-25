@@ -441,7 +441,7 @@ namespace Couchbase.Lite.Storage.SQLCipher
                             }
 
                             Log.To.Database.I(TAG, "Db busy, retrying transaction ({0})", retries);
-                            Thread.Sleep(TRANSACTION_MAX_RETRY_DELAY);
+                            Task.Delay(TRANSACTION_MAX_RETRY_DELAY).Wait();
                             keepGoing = true;
                         } else {
                             Log.To.Database.E(TAG, "Failed to run transaction, rethrowing...");
@@ -726,7 +726,7 @@ namespace Couchbase.Lite.Storage.SQLCipher
             } catch (ugly.sqlite3_exception ex) {
                 Log.To.Database.I(TAG, "Retrying database close due to exception.", ex);
                 // Assuming a basic retry fixes this.
-                Thread.Sleep(5000);
+                Task.Delay(5000).Wait();
                 dbCopy.close();
             }
 

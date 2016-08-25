@@ -454,7 +454,7 @@ namespace Couchbase.Lite.Util
         public static readonly string Name;
         public static readonly string Architecture;
 
-        #if !__IOS__ && !__ANDROID__
+        #if !__IOS__ && !__ANDROID__ && !WINDOWS_UWP
 
         private static string GetWindowsName()
         {
@@ -499,18 +499,27 @@ namespace Couchbase.Lite.Util
 
         static Platform()
         {
-            #if __IOS__
+#if __IOS__
             var info = iOSHardware.GetModelAndArch();
             Name = String.Format("{0} {1}",
                 info.Item1,
                 UIKit.UIDevice.CurrentDevice.SystemVersion);
             Architecture = info.Item2;
-            #elif __ANDROID__
+#elif __ANDROID__
             var info = AndroidHardware.GetModelAndArch();
             Name = String.Format("{0} API{1}", info.Item1,
                 (int)global::Android.OS.Build.VERSION.SdkInt);
             Architecture = info.Item2;
-            #else
+#elif WINDOWS_UWP
+            var ai = Windows.System.Profile.AnalyticsInfo.VersionInfo;
+            var version = UInt64.Parse(ai.DeviceFamilyVersion);
+            ulong v1 = (version & 0xFFFF000000000000L) >> 48;
+            ulong v2 = (version & 0x0000FFFF00000000L) >> 32;
+            ulong v3 = (version & 0x00000000FFFF0000L) >> 16;
+            ulong v4 = (version & 0x000000000000FFFFL);
+            Name = $"{ai.DeviceFamily} ({v1}.{v2}.{v3}.{v4})";
+            Architecture = Windows.ApplicationModel.Package.Current.Id.Architecture.ToString();
+#else
             var isWindows = Path.DirectorySeparatorChar == '\\';
             if (isWindows) {
                 Name = GetWindowsName();
@@ -534,7 +543,7 @@ namespace Couchbase.Lite.Util
 
                 Name = String.Format("{0} {1}", systemName, version);
             }
-            #endif
+#endif
         }
 
         [DllImport("libc")]

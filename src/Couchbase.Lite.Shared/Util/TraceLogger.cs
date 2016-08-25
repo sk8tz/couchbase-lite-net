@@ -52,18 +52,18 @@ namespace Couchbase.Lite.Util
 
         private string MakeMessage(string msg, Exception tr)
         {
-            #if !NET_3_5
+#if !NET_3_5 && !WINDOWS_UWP
             var traceInfo = new TraceEventCache();
             var dateTime = traceInfo.DateTime.ToLocalTime().ToString("yyyy-M-d hh:mm:ss.fffK");
             return $"[{traceInfo.ThreadId}] {dateTime} {msg}:\r\n{tr}";
-            #else
+#else
             return String.Format("{0}:\r\n{1}", msg, tr);
             #endif
         }
 
         private string MakeMessage(string msg)
         {
-#if !NET_3_5
+#if !NET_3_5 && !WINDOWS_UWP
             var traceInfo = new TraceEventCache();
             var dateTime = traceInfo.DateTime.ToLocalTime().ToString("yyyy-M-d hh:mm:ss.fffK");
             return $"[{traceInfo.ThreadId}] {dateTime} {msg}";
@@ -76,7 +76,7 @@ namespace Couchbase.Lite.Util
         {
             _scheduler.StartNew(() =>
             {
-                Trace.WriteLine(MakeMessage(msg), $"{level} {tag}");
+                Debug.WriteLine(MakeMessage(msg), $"{level} {tag}");
             });
         }
 
@@ -84,7 +84,7 @@ namespace Couchbase.Lite.Util
         {
             _scheduler.StartNew(() =>
             {
-                Trace.WriteLine(MakeMessage(msg, tr), $"{level} {tag}");
+                Debug.WriteLine(MakeMessage(msg, tr), $"{level} {tag}");
             });
         }
 

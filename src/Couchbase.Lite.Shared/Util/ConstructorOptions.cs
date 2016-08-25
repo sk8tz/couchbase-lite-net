@@ -49,7 +49,7 @@ namespace Couchbase.Lite.Util
             foreach (var prop in allProps) {
                 var reqAtt = (RequiredPropertyAttribute)prop.GetCustomAttributes(typeof(RequiredPropertyAttribute), false).FirstOrDefault();
                 if (reqAtt != null) {
-                    if (prop.PropertyType.IsValueType) {
+                    if (prop.PropertyType.GetTypeInfo().IsValueType) {
                         Log.To.NoDomain.W(Tag, "Skipping {0} required attribute because it is a value type", prop.Name);
                         continue;
                     }

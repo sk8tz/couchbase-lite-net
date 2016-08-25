@@ -141,13 +141,17 @@ namespace Couchbase.Lite.Replicator
                 // is already at the end)
                 var mre = new ManualResetEvent(false);
                 request.Content.LoadIntoBufferAsync().ConfigureAwait(false).GetAwaiter().OnCompleted(() => mre.Set());
+#if WINDOWS_UWP
+                mre.WaitOne(_timeout);
+#else
                 mre.WaitOne(_timeout, true);
+#endif
             }
 
             return request;
         }
 
-        #endregion
+#endregion
 
     }
 }

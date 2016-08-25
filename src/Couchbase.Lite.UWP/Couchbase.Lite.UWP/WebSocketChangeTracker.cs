@@ -137,6 +137,8 @@ namespace Couchbase.Lite.Internal
             // gone in the POST body if this were HTTP-based.)
             var bytes = GetChangesFeedPostBody().ToArray();
             _client?.SendAsync(new System.ArraySegment<byte>(bytes), WebSocketMessageType.Binary, true, CancellationToken.None);
+            var buffer = new System.ArraySegment<byte>(new byte[1024]);
+            _client.ReceiveAsync(buffer, _cts.Token).ContinueWith(t => OnReceive(t.Result, buffer));
         }
 
         // Called when a message is received
@@ -153,13 +155,13 @@ namespace Couchbase.Lite.Internal
             }
 
             try {
-                if(buffer.Count == 0) {
+                if(result.Count == 0) {
                     return;
                 }
 
                 var code = ChangeTrackerMessageType.Unknown;
                 if(result.MessageType == WebSocketMessageType.Text) {
-                    if(buffer.Count == 2 && buffer.ElementAt(0) == '[' && buffer.ElementAt(1) == ']') {
+                    if(result.Count == 2 && buffer.ElementAt(0) == '[' && buffer.ElementAt(1) == ']') {
                         code = ChangeTrackerMessageType.EOF;
                     } else {
                         code = ChangeTrackerMessageType.Plaintext;
@@ -171,7 +173,7 @@ namespace Couchbase.Lite.Internal
                 var responseStream = RecyclableMemoryStreamManager.SharedInstance.GetStream("WebSocketChangeTracker", buffer.Count + 1);
                 try {
                     responseStream.WriteByte((byte)code);
-                    responseStream.Write(buffer.ToArray(), 0, buffer.Count);
+                    responseStream.Write(buffer.ToArray(), 0, result.Count);
                     responseStream.Seek(0, SeekOrigin.Begin);
                     _responseLogic.ProcessResponseStream(responseStream, _cts.Token);
                 } finally {
@@ -217,14 +219,14 @@ namespace Couchbase.Lite.Internal
             _usePost = false;
             _caughtUp = false;
             _client = new ClientWebSocket();
-            _client.Options.Cookies.Add(ChangesFeedUrl, Client.GetCookieStore().GetCookies(ChangesFeedUrl));
+            var cookiesToAdd = Client.GetCookieStore().GetCookies(ChangesFeedUrl);
+            _client.Options.Cookies = new CookieContainer();
+            _client.Options.Cookies.Add(ChangesFeedUrl, cookiesToAdd);
             if (authHeader != null) {
                 _client.Options.SetRequestHeader("Authorization", authHeader.ToString());
             }
 
-            var buffer = new System.ArraySegment<byte>();
             _client.ConnectAsync(ChangesFeedUrl, _cts.Token).ContinueWith(t => OnConnect());
-            _client.ReceiveAsync(buffer, _cts.Token).ContinueWith(t => OnReceive(t.Result, buffer));
             return true;
         }
 

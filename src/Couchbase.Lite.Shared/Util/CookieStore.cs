@@ -281,7 +281,11 @@ namespace Couchbase.Lite.Util
                 }
             }
 
+#if WINDOWS_UWP
+            base.Add(url, newCookie);
+#else
             base.Add(newCookie);
+#endif
 
             if (save) {
                 Save();
@@ -320,7 +324,7 @@ namespace Couchbase.Lite.Util
                 aggregate.AddRange(collection.Cast<Cookie>().Where(IsNotSessionOnly));
             }
 
-            using (var writer = new StreamWriter(filePath)) {
+            using(var writer = new StreamWriter(File.OpenWrite(filePath))) {
                 var json = Manager.GetObjectMapper().WriteValueAsString(aggregate);
                 writer.Write(json);
             }
@@ -338,7 +342,7 @@ namespace Couchbase.Lite.Util
                 return;
             }
 
-            using (var reader = new StreamReader(filePath)) {
+            using (var reader = new StreamReader(File.OpenRead(filePath))) {
                 var json = reader.ReadToEnd();
 
                 var cookies = Manager.GetObjectMapper().ReadValue<IList<Cookie>>(json);
@@ -426,7 +430,7 @@ namespace Couchbase.Lite.Util
             }
         }
 
-        #endregion
+#endregion
     }
 }
 

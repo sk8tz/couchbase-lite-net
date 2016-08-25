@@ -117,10 +117,10 @@ namespace Couchbase.Lite
             var tempDir = store.TempDir();
             tempFile = Path.Combine(tempDir, filename);
             if (store.EncryptionKey == null) {
-                outStream = new BufferedStream(File.Open (tempFile, FileMode.Create, FileAccess.ReadWrite, FileShare.ReadWrite));
+                outStream = File.Open (tempFile, FileMode.Create, FileAccess.ReadWrite, FileShare.ReadWrite);
             } else {
                 outStream = store.EncryptionKey.CreateStream(
-                    new BufferedStream(File.Open(tempFile, FileMode.Create, FileAccess.ReadWrite, FileShare.ReadWrite)));
+                    File.Open(tempFile, FileMode.Create, FileAccess.ReadWrite, FileShare.ReadWrite));
             }
         }
 
@@ -129,7 +129,7 @@ namespace Couchbase.Lite
         public void AppendData(IEnumerable<Byte> data)
         {
             var dataVector = data.ToArray();
-            length += dataVector.LongLength;
+            length += dataVector.LongCount();
             sha1Digest.Update(dataVector);
             md5Digest.Update(dataVector);
 
@@ -162,7 +162,7 @@ namespace Couchbase.Lite
                     "Unable to read from stream");
             } finally {
                 try {
-                    inputStream.Close();
+                    inputStream.Dispose();
                 } catch (IOException e) {
                     Log.To.Database.W(Tag, "Exception closing input stream, continuing...", e);
                 }

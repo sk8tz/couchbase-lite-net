@@ -948,7 +948,7 @@ namespace Couchbase.Lite.Replicator
             }
 
             if (!Document.IsValidDocumentId(docID)) {
-                if (!docID.StartsWith("_user/", StringComparison.InvariantCultureIgnoreCase)) {
+                if (!docID.StartsWith("_user/", StringComparison.OrdinalIgnoreCase)) {
                     Log.To.Sync.W(TAG, "{0}: Received invalid doc ID from _changes: {1} ({2})", 
                         this, new SecureLogString(docID, LogMessageSensitivity.PotentiallyInsecure), new LogJsonString(change));
                 }
@@ -987,7 +987,7 @@ namespace Couchbase.Lite.Replicator
             while (_revsToPull != null && _revsToPull.Count > 1000) {
                 try {
                     // Presumably we are letting 1 or more other threads do something while we wait.
-                    Thread.Sleep(500);
+                    Task.Delay(500).Wait();
                 }
                 catch (Exception e) {
                     Log.To.Sync.W(TAG, "Swallowing exception while sleeping after receiving changetracker changes.", e);

@@ -4,7 +4,9 @@
     "Newtonsoft.Json": "7.0.1",
     "SharpZipLib.Portable": "0.86.0.3",
     "Stateless": "2.5.53",
-    "System.Security.Cryptography.Algorithms": "4.2.0"
+    "System.Collections.NonGeneric": "4.0.1",
+    "System.Security.Cryptography.Algorithms": "4.2.0",
+    "System.Security.Cryptography.ProtectedData": "4.0.0"
   },
   "frameworks": {
     "uap10.0": {}

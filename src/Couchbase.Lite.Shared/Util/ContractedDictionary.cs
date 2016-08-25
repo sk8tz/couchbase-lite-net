@@ -22,6 +22,7 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 
 namespace Couchbase.Lite.Util
 {
@@ -168,7 +169,7 @@ namespace Couchbase.Lite.Util
         /// </summary>
         protected ContractedDictionary()
         {
-            var att = (DictionaryContractAttribute)GetType().GetCustomAttributes(typeof(DictionaryContractAttribute), false).FirstOrDefault();
+            var att = (DictionaryContractAttribute)GetType().GetTypeInfo().GetCustomAttributes(typeof(DictionaryContractAttribute), false).FirstOrDefault();
             if (att == null) {
                 throw new InvalidOperationException("ContractedDictionary requires the DictionaryContract attribute");
             }

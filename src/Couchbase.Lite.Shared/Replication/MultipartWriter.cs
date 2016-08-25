@@ -148,7 +148,7 @@ namespace Couchbase.Lite.Support
             var separator = Encoding.UTF8.GetBytes(headers.ToString());
             SetNextPartHeaders(null);
 
-            base.AddInput(separator, separator.LongLength);
+            base.AddInput(separator, separator.LongCount());
             base.AddInput(input, length);
         }
 

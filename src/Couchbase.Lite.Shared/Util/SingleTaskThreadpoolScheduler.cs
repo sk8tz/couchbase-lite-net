@@ -1,10 +1,13 @@
 ﻿using System;
-using System.Collections.Generic; 
+using System.Collections.Generic;
 using System.Collections.Concurrent;
 using System.Threading.Tasks;
 using System.Threading;
 using System.Linq;
 using System.Reflection;
+#if WINDOWS_UWP
+using Windows.System.Threading;
+#endif
 
 namespace Couchbase.Lite.Util
 {
@@ -35,20 +38,24 @@ namespace Couchbase.Lite.Util
             if (task.CreationOptions.HasFlag(TaskCreationOptions.LongRunning))
             {
                 Log.To.TaskScheduling.V(Tag, "Long running task detected, adding directly to runtime threadpool...");
+#if WINDOWS_UWP
+                ThreadPool.RunAsync(s =>
+#else
                 ThreadPool.UnsafeQueueUserWorkItem(s =>
+#endif
                 {
-                    var submittedTask = (Task)s;
+                    var submittedTask = task;
                     Log.To.TaskScheduling.V(Tag, "Processing long running task {0}", submittedTask.Id);
                     _CurrentThreadIsProcessingItems = true;
                     try {
-                        if (((Task)s).Status >= TaskStatus.Running) {
+                        if (task.Status >= TaskStatus.Running) {
                             Log.To.TaskScheduling.V(Tag, "Skipping already running task {0}...", submittedTask.Id);
                             return;
                         }
 
-                        var success = TryExecuteTask((Task)s);
+                        var success = TryExecuteTask(task);
                         if (!success) {
-                            if(((Task)s).Status == TaskStatus.Faulted) {
+                            if(task.Status == TaskStatus.Faulted) {
                                 Log.To.TaskScheduling.E(Tag, "A task in the scheduler failed to run", submittedTask.Exception);
                             }
                         }
@@ -57,7 +64,7 @@ namespace Couchbase.Lite.Util
                     } finally {
                         _CurrentThreadIsProcessingItems = false;
                     }
-                }, task);
+                });
                 return;
             }
 
@@ -72,9 +79,13 @@ namespace Couchbase.Lite.Util
         } 
 
         private void QueueThreadPoolWorkItem() 
-        { 
-            ThreadPool.UnsafeQueueUserWorkItem(s => 
-            { 
+        {
+#if WINDOWS_UWP
+            ThreadPool.RunAsync(s =>
+#else
+            ThreadPool.UnsafeQueueUserWorkItem(s =>
+#endif
+            {
                 Log.To.TaskScheduling.V(Tag, "Processing queue started...");
                 _CurrentThreadIsProcessingItems = true;
                 try { 
@@ -97,8 +108,8 @@ namespace Couchbase.Lite.Util
                             Log.To.TaskScheduling.V(Tag, "Executing task...");
                             var success = TryExecuteTask(item);
                             if (!success) {
-                                if(((Task)s).Status == TaskStatus.Faulted) {
-                                    Log.To.TaskScheduling.E(Tag, "Task failed to run", ((Task)s).Exception);
+                                if(item.Status == TaskStatus.Faulted) {
+                                    Log.To.TaskScheduling.E(Tag, "Task failed to run", item.Exception);
                                 }
                             }
                         } else {
@@ -111,13 +122,13 @@ namespace Couchbase.Lite.Util
                 } finally {
                     _CurrentThreadIsProcessingItems = false;
                 }
-            }, null);
+            });
         } 
 
         protected override bool TryExecuteTaskInline(Task task, bool taskWasPreviouslyQueued) 
         {
             if (!_CurrentThreadIsProcessingItems) {
-                Log.To.TaskScheduling.V(Tag, "Thread {0} not processing items, so cannot execute inline", Thread.CurrentThread.ManagedThreadId);
+                Log.To.TaskScheduling.V(Tag, "Thread {0} not processing items, so cannot execute inline", Environment.CurrentManagedThreadId);
                 return false;
             }
 

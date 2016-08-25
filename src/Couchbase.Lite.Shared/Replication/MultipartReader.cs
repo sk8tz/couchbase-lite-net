@@ -295,17 +295,17 @@ namespace Couchbase.Lite.Support
             foreach (var token in tokenizer) {
                 string param = token.Trim();
                 if (first) {
-                    if (!param.StartsWith("multipart/", StringComparison.InvariantCultureIgnoreCase)) {
+                    if (!param.StartsWith("multipart/", StringComparison.OrdinalIgnoreCase)) {
                         Log.To.Sync.E(Tag, "Content type ({0}) does not start with multipart/, throwing...", contentType);
                         throw new ArgumentException("does not start with multipart/", "contentType");
                     }
 
                     first = false;
                 }  else {
-                    if (param.StartsWith("boundary=", StringComparison.InvariantCultureIgnoreCase)) {
+                    if (param.StartsWith("boundary=", StringComparison.OrdinalIgnoreCase)) {
                         var tempBoundary = param.Substring(9);
-                        if (tempBoundary.StartsWith("\"", StringComparison.InvariantCultureIgnoreCase)) {
-                            if (tempBoundary.Length < 2 || !tempBoundary.EndsWith("\"", StringComparison.InvariantCultureIgnoreCase)) {
+                        if (tempBoundary.StartsWith("\"", StringComparison.OrdinalIgnoreCase)) {
+                            if (tempBoundary.Length < 2 || !tempBoundary.EndsWith("\"", StringComparison.OrdinalIgnoreCase)) {
                                 Log.To.Sync.E(Tag, "Invalid boundary in content type ({0})", tempBoundary);
                                 throw new ArgumentException("contentType");
                             }

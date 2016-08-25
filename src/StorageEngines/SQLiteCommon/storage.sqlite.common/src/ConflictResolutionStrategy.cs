@@ -47,7 +47,9 @@ namespace Couchbase.Lite.Store
     /// <summary>
     /// Indicates the action to take when an insert action finds an existing entry
     /// </summary>
+#if !WINDOWS_UWP
     [Serializable]
+#endif
     public enum ConflictResolutionStrategy
     {
         /// <summary>

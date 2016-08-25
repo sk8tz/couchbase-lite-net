@@ -576,7 +576,7 @@ namespace Microsoft.IO
         /// <param name="tag">A tag which can be used to track the source of the stream.</param>
         /// <param name="requiredSize">The minimum desired capacity for the stream.</param>
         /// <returns>A MemoryStream.</returns>
-        public MemoryStream GetStream(string tag, int requiredSize)
+        public RecyclableMemoryStream GetStream(string tag, int requiredSize)
         {
             return new RecyclableMemoryStream(this, tag, requiredSize);
         }

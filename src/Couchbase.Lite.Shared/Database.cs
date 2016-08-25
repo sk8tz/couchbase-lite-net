@@ -63,6 +63,7 @@ using Couchbase.Lite.Linq;
 #if !NET_3_5
 using System.Net;
 using StringEx = System.String;
+using System.Reflection;
 #else
 using System.Net.Couchbase;
 #endif
@@ -822,12 +823,13 @@ namespace Couchbase.Lite
                     }
                 }
 
-                ThreadPool.RegisterWaitForSingleObject(evt.WaitHandle, (state, timedOut) =>
+                Task.Run(() =>
                 {
+                    var timedOut = !evt.Wait(TimeSpan.FromSeconds(15));
                     ActiveReplicators.Release();
                     CloseStorage();
                     tcs.SetResult(!timedOut);
-                }, null, 15000, true);
+                });
             } else {
                 ActiveReplicators.Release();
                 CloseStorage();
@@ -879,7 +881,7 @@ namespace Couchbase.Lite
 
         internal static void RegisterStorageEngine(string identifier, Type type)
         {
-            if(type.GetTypeInfo().GetInterface("Couchbase.Lite.Store.ICouchStore") == null) {
+            if(!type.GetTypeInfo().ImplementedInterfaces.Any(x => x.Name == "ICouchStore")) {
                 Log.To.Database.E(TAG, "Storage engine type {0} is not ICouchStore, throwing Exception...",
                     type.FullName);
                 throw new ArgumentException("Storage engine type is not ICouchStore");

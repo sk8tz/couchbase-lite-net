@@ -84,6 +84,7 @@ namespace Couchbase.Lite.Util
 
         private void Run()
         {
+            _specialThreadId = Environment.CurrentManagedThreadId;
             while (!_disposed || _jobQueue.Count > 0) {
                 _mre.Wait();
                 Drain();

@@ -185,8 +185,12 @@ namespace Couchbase.Lite.Support
             _output = output;
             var mre = new ManualResetEventSlim();
             var tcs = new TaskCompletionSource<bool>();
-            ThreadPool.RegisterWaitForSingleObject(mre.WaitHandle, (o, timeout) => tcs.SetResult(!timeout),
-                null, TimeSpan.FromSeconds(30), true);
+            Task.Run(() =>
+            {
+                var timedOut = !mre.Wait(TimeSpan.FromSeconds(30));
+                tcs.SetResult(!timedOut);
+            });
+
             Opened(mre);
 
             return tcs.Task;
@@ -323,7 +327,7 @@ namespace Couchbase.Lite.Support
         private bool OpenNextInput()
         {
             if (_currentInput != null) {
-                _currentInput.Close();
+                _currentInput.Dispose();
                 _currentInput = null;
             }
 

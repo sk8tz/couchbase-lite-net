@@ -225,6 +225,8 @@ namespace Couchbase.Lite.Storage.SQLCipher
 #else
             raw.SetProvider (new SQLite3Provider_cbsqlite());
 #endif
+#elif WINDOWS_UWP
+            raw.SetProvider(new SQLite3Provider_sqlite3());
 #elif SQLITE && !__MOBILE__
             if(Environment.OSVersion.Platform == PlatformID.Win32NT)
             {

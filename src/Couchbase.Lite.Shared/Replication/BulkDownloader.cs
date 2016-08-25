@@ -250,7 +250,7 @@ namespace Couchbase.Lite.Replicator
                                 RespondWithResult(fullBody, error, response);
                             } finally {
                                 try { 
-                                    inputStream.Close();
+                                    inputStream.Dispose();
                                 } catch (IOException) { }
                             }
                         } else {
@@ -262,7 +262,7 @@ namespace Couchbase.Lite.Replicator
                                     RespondWithResult(fullBody, error, response);
                                 } finally {
                                     try {
-                                        inputStream.Close();
+                                        inputStream.Dispose();
                                     } catch (IOException) {  }
                                 }
                             }

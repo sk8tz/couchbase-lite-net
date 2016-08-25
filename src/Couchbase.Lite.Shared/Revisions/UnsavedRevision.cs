@@ -326,13 +326,16 @@ namespace Couchbase.Lite
             try {
                 byte[] inputBytes = null;
                 var request = WebRequest.Create(contentUrl);
-                using(var response = request.GetResponse())
-                using(var inputStream = response.GetResponseStream()) {
-                    var length = inputStream.Length;
-                    inputBytes = inputStream.ReadAllBytes();
-                }
+                request.GetResponseAsync().ContinueWith(t =>
+                {
+                    using(var inputStream = t.Result.GetResponseStream()) {
+                        var length = inputStream.Length;
+                        inputBytes = inputStream.ReadAllBytes();
+                    }
 
-                SetAttachment(name, contentType, inputBytes);
+                    SetAttachment(name, contentType, inputBytes);
+                    t.Result.Dispose();
+                });
             } catch(IOException e) {
                 throw Misc.CreateExceptionAndLog(Log.To.Database, e, Tag,
                     "Error opening stream for url: {0}", contentUrl);

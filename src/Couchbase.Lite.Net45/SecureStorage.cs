@@ -35,8 +35,11 @@ namespace Couchbase.Lite
     internal class SecureStorage : ISecureStorage
     {
         private static readonly byte[] _Entropy = new byte[] { 9, 8, 7, 6, 5 };
+#if WINDOWS_UWP
+        private static readonly string _BaseDirectory = Path.Combine(Windows.Storage.ApplicationData.Current.LocalFolder.Path, ".cbl_store");
+#else
         private static readonly string _BaseDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), ".cbl_store");
-
+#endif
         static SecureStorage()
         {
             Directory.CreateDirectory(_BaseDirectory);

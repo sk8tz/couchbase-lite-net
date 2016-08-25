@@ -556,10 +556,8 @@ namespace Couchbase.Lite
             var s2 = CreateStringFromJSON(str2, start2, out endPos2);
 
             // TODO: Detect current localization and use the corresponding CompareInfo
-            var comp = CultureInfo.InvariantCulture.CompareInfo;
-            var sk1 = comp.GetSortKey(s1);
-            var sk2 = comp.GetSortKey(s2);
-            return SortKey.Compare(sk1, sk2);
+            var comp = CultureInfo.InvariantCulture.CompareInfo.GetStringComparer(CompareOptions.OrdinalIgnoreCase);
+            return comp.Compare(s1, s2);
         }
 
         ///

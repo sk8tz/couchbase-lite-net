@@ -246,7 +246,7 @@ namespace Couchbase.Lite
             var block = RecyclableMemoryStreamManager.SharedInstance.GetBlock();
             try {
                 if (ms != null) {
-                    return ms.GetBuffer().Take((int)ms.Length).ToArray();
+                    return ms.ToArray();
                 }
 
                 ms = RecyclableMemoryStreamManager.SharedInstance.GetStream();
@@ -255,7 +255,7 @@ namespace Couchbase.Lite
                 while((read = stream.Read(block, 0, block.Length)) > 0) {
                     ms.Write(block, 0, read);
                 }
-                return ms.GetBuffer().Take((int)ms.Length).ToArray();
+                return ms.ToArray();
             } finally {
                 if(owner) {
                     ms?.Dispose();

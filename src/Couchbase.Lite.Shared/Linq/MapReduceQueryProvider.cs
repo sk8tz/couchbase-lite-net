@@ -24,6 +24,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Reflection;
 using System.Text;
 using Couchbase.Lite.Internal;
 using Couchbase.Lite.Revisions;
@@ -137,7 +138,7 @@ namespace Couchbase.Lite.Linq
 
         private object GetTypedKeys<TOriginal>(IEnumerable<QueryRow> input, int skip = 0, int limit = Int32.MaxValue)
         {
-            var genericTypeArgs = typeof(TOriginal).GetGenericArguments();
+            var genericTypeArgs = typeof(TOriginal).GetTypeInfo().GenericTypeArguments;
             var tmp = _where != null ? input.Skip(skip).Take(limit).Select(x => x.Key) : Map(input.Skip(skip).Take(limit));
 
             if(genericTypeArgs.Length == 0) {
@@ -216,7 +217,7 @@ namespace Couchbase.Lite.Linq
         {
             var reduceFunction = _reduce.Compile();
             var type = keys.FirstOrDefault()?.GetType();
-            object reduced = (type != null && type.IsValueType) ? Activator.CreateInstance(type) : null;
+            object reduced = (type != null && type.GetTypeInfo().IsValueType) ? Activator.CreateInstance(type) : null;
             foreach(var k in keys) {
                 reduced = reduceFunction.DynamicInvoke(reduced, k);
             }

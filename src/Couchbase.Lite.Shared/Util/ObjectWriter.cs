@@ -142,7 +142,7 @@ namespace Couchbase.Lite
             }
 
             var t = input.GetType();
-            if (t.GetInterface(typeof(IDictionary<,>).FullName) != null) {
+            if (t.GetTypeInfo().ImplementedInterfaces.Contains((typeof(IDictionary<,>)))) {
                 var sorted = new SortedDictionary<object, object>();
                 var method = t.GetMethod("GetEnumerator");
                 var e = (IEnumerator)method.Invoke(input, null);

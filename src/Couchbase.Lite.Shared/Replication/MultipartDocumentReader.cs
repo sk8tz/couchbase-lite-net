@@ -155,7 +155,7 @@ namespace Couchbase.Lite.Support
                 // No multipart, so no attachments. Body is pure JSON. (We allow text/plain because CouchDB
                 // sends JSON responses using the wrong content-type.)
                 jsonBuffer = new List<byte>();
-            } else if (contentType.StartsWith ("multipart/", StringComparison.InvariantCultureIgnoreCase)) {
+            } else if (contentType.StartsWith ("multipart/", StringComparison.OrdinalIgnoreCase)) {
                 multipartReader = new MultipartReader(contentType, this);
                 attachmentsByName = new Dictionary<String, BlobStoreWriter>();
                 attachmentsBySHA1Digest = new Dictionary<String, BlobStoreWriter>();

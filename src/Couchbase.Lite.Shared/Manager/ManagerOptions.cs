@@ -146,9 +146,11 @@ namespace Couchbase.Lite
             } finally {
                 CallbackScheduler =  scheduler ?? TaskScheduler.Current ?? TaskScheduler.Default;
             }
-            #endif
+#endif
 
+#if !WINDOWS_UWP
             ServicePointManager.DefaultConnectionLimit = Environment.ProcessorCount * 12;
+#endif
         }
             
         /// <summary>Gets or sets, whether changes to databases are disallowed by default.</summary>

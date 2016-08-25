@@ -70,6 +70,7 @@ using System;
 [assembly: InternalsVisibleTo("CouchbaseLiteiOSTests")]
 [assembly: InternalsVisibleTo("Couchbase.Lite.Net35.Tests")]
 [assembly: InternalsVisibleTo("Couchbase.Lite.Unity.Tests")]
+[assembly: InternalsVisibleTo("Couchbase.Lite.UWP.Tests")]
 [assembly: InternalsVisibleTo("Couchbase.Lite.Listener")]
 [assembly: InternalsVisibleTo("Couchbase.Lite.Listener.Bonjour")]
 [assembly: InternalsVisibleTo("Couchbase.Lite.Storage.SystemSQLite")]
